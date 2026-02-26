@@ -1,0 +1,20 @@
+<div id="p-wrapper">
+  <ul id="piano">
+    <li *ngFor="let pianoKey of pianoKeys">
+      <div
+        class="anchor"
+        [class.keyPressed]="highlightedKeyIds.has(pianoKey.whiteKeyId)"
+        (mousedown)="keyPress(pianoKey.whiteKeyId)"
+        (mouseup)="keyRelease(pianoKey.whiteKeyId)"
+        (mouseleave)="keyRelease(pianoKey.whiteKeyId)"
+      ></div>
+      <span
+        *ngIf="pianoKey.blackKeyId"
+        [class.keyPressed]="highlightedKeyIds.has(pianoKey.blackKeyId)"
+        (mousedown)="keyPress(pianoKey.blackKeyId)"
+        (mouseup)="keyRelease(pianoKey.blackKeyId)"
+        (mouseleave)="keyRelease(pianoKey.blackKeyId)"
+      ></span>
+    </li>
+  </ul>
+</div>

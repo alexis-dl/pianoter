@@ -1,0 +1,100 @@
+$white-key-width: 38px;
+$white-key-height: 220px;
+$black-key-width: 22px;
+$black-key-height: 130px;
+$pressed-blue: #4f9cf8;
+
+#p-wrapper {
+  background: #d0d4db;
+  background: linear-gradient(160deg, #dde1e7, #c8cdd5, #d8dce3);
+  padding: 14px 14px 20px;
+  border-radius: 0 0 12px 12px;
+  box-shadow:
+    0 2px 0 #bec4cc,
+    0 4px 0 #b0b8c2,
+    0 8px 20px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+
+  animation: fadeIn 0.5s ease;
+}
+
+ul#piano {
+  display: block;
+  height: $white-key-height + 20px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 3px solid #a8b0bb;
+  background: #bec4cc;
+  border-radius: 0 0 4px 4px;
+}
+
+ul#piano li {
+  float: left;
+  display: inline;
+  width: $white-key-width;
+  position: relative;
+  cursor: pointer;
+}
+
+/* White keys */
+ul#piano li div.anchor {
+  display: block;
+  height: $white-key-height;
+  background: linear-gradient(175deg, #fdfdfd, #f0f2f5);
+  border: 1px solid #cdd2d9;
+  border-top: none;
+  border-radius: 0 0 5px 5px;
+  box-shadow:
+    inset 1px 0 0 rgba(255, 255, 255, 0.8),
+    inset -1px 0 0 rgba(255, 255, 255, 0.4),
+    0 4px 6px rgba(0, 0, 0, 0.12);
+  transition: background 0.06s ease, box-shadow 0.06s ease, transform 0.06s ease;
+  user-select: none;
+}
+
+ul#piano li div.anchor:active,
+ul#piano li div.anchor.keyPressed {
+  background: linear-gradient(175deg, #daeaff, #b8d4ff);
+  box-shadow:
+    inset 0 4px 8px rgba(79, 156, 248, 0.25),
+    0 1px 3px rgba(0, 0, 0, 0.1);
+  transform: translateY(2px);
+  height: $white-key-height - 2px;
+}
+
+/* Black keys */
+ul#piano li span {
+  position: absolute;
+  top: 0;
+  left: -($black-key-width * 0.5);
+  width: $black-key-width;
+  height: $black-key-height;
+  background: linear-gradient(175deg, #3a3d42, #1c1e21);
+  z-index: 10;
+  border-width: 0 1px 5px;
+  border-style: solid;
+  border-color: #555 #111 #000;
+  border-radius: 0 0 4px 4px;
+  box-shadow:
+    inset 1px 0 0 rgba(255, 255, 255, 0.1),
+    0 4px 8px rgba(0, 0, 0, 0.4);
+  transition: background 0.06s ease, box-shadow 0.06s ease, transform 0.06s ease;
+  user-select: none;
+}
+
+ul#piano li span:active,
+ul#piano li span.keyPressed {
+  background: linear-gradient(175deg, #1a3a6e, #0d2244);
+  box-shadow:
+    inset 0 3px 6px rgba(79, 156, 248, 0.4),
+    0 2px 4px rgba(0, 0, 0, 0.5);
+  transform: translateY(2px);
+  height: $black-key-height + 2px;
+  border-bottom-width: 3px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
