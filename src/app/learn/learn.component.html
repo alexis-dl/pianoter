@@ -1,0 +1,9 @@
+<div class="apprendre">
+  <div class="note-display" [class.has-notes]="(display$ | async)?.noteNames?.length">
+    <div class="label">{{ (display$ | async)?.label || '—' }}</div>
+    <div class="chips" *ngIf="((display$ | async)?.noteNames?.length ?? 0) > 1">
+      <span class="chip" *ngFor="let note of (display$ | async)?.noteNames">{{ note }}</span>
+    </div>
+  </div>
+  <app-keyboard></app-keyboard>
+</div>

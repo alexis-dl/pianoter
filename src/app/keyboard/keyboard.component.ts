@@ -1,6 +1,7 @@
-import { Component, OnInit, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, inject } from '@angular/core';
 import { IPianoKey } from './ipiano-key';
 import { CommonModule } from '@angular/common';
+import { NoteStateService } from '../note-state.service';
 // notes range will be generated dynamically (C2 to C6)
 
 @Component({
@@ -10,7 +11,8 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   standalone: true,
 })
-export class KeyboardComponent implements OnInit {
+export class KeyboardComponent implements OnInit, OnDestroy {
+  private noteState = inject(NoteStateService);
   pianoKeys: IPianoKey[];
   highlightedKeyIds: Set<number> = new Set();
 
@@ -218,12 +220,16 @@ export class KeyboardComponent implements OnInit {
     this.stopNoteByIndex(noteIndex);
   }
 
+  ngOnDestroy(): void {
+    this.noteState.reset();
+  }
+
   private async startNoteByIndex(noteIndex: number) {
     const note = this.fullNotes[noteIndex];
     const keyIds = this.noteToKeyIds.get(noteIndex) || [];
     keyIds.forEach((keyId) => this.highlightedKeyIds.add(keyId));
-
     this.stopNoteByIndex(noteIndex, 0);
+    this.noteState.press(noteIndex);
 
     if (this.audioContext.state === 'suspended') {
       await this.audioContext.resume();
@@ -252,6 +258,7 @@ export class KeyboardComponent implements OnInit {
   private stopNoteByIndex(noteIndex: number, fadeTime = 0.15) {
     const keyIds = this.noteToKeyIds.get(noteIndex) || [];
     keyIds.forEach((keyId) => this.highlightedKeyIds.delete(keyId));
+    this.noteState.release(noteIndex);
 
     const nodes = this.activeNodes.get(noteIndex);
     if (nodes) {

@@ -10,7 +10,13 @@
         <h1 class="app-title">Pianoter</h1>
         <p class="app-subtitle">Virtual Piano</p>
       </header>
-      <app-keyboard></app-keyboard>
+      <nav class="app-nav">
+        <a class="nav-item" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Piano</a>
+        <a class="nav-item" routerLink="/apprendre" routerLinkActive="active">Apprendre</a>
+        <a class="nav-item" href="#">Partitions</a>
+      </nav>
+
+      <router-outlet></router-outlet>
     </div>
   </body>
 </html>

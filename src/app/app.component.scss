@@ -25,3 +25,34 @@
   text-transform: uppercase;
   margin-top: 4px;
 }
+
+.app-nav {
+  display: flex;
+  gap: 4px;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+.nav-item {
+  padding: 8px 20px;
+  border-radius: 7px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #8892a4;
+  text-decoration: none;
+  transition: color 0.15s, background 0.15s;
+  letter-spacing: 0.01em;
+
+  &:hover {
+    color: #1a1a2e;
+    background: #f0f2f5;
+  }
+
+  &.active {
+    color: #1a1a2e;
+    background: #f0f2f5;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  }
+}
