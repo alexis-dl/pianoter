@@ -1,0 +1,52 @@
+<div class="parameters-view">
+  <h2>{{ 'settings.title' | translate }}</h2>
+
+  <section class="setting-group">
+    <h3>{{ 'settings.notation.title' | translate }}</h3>
+    <div class="notation-options">
+      <label class="option" [class.selected]="(notation$ | async) === 'latin'">
+        <input
+          type="radio"
+          name="notation"
+          value="latin"
+          [checked]="(notation$ | async) === 'latin'"
+          (change)="setNotation('latin')"
+        />
+        <span>{{ 'settings.notation.latin' | translate }} <em>{{ 'settings.notation.latin.hint' | translate }}</em></span>
+      </label>
+      <label class="option" [class.selected]="(notation$ | async) === 'anglo'">
+        <input
+          type="radio"
+          name="notation"
+          value="anglo"
+          [checked]="(notation$ | async) === 'anglo'"
+          (change)="setNotation('anglo')"
+        />
+        <span>{{ 'settings.notation.anglo' | translate }} <em>{{ 'settings.notation.anglo.hint' | translate }}</em></span>
+      </label>
+    </div>
+  </section>
+
+  <section class="setting-group">
+    <h3>{{ 'settings.language.title' | translate }}</h3>
+    <div class="custom-select" [class.open]="langOpen" (click)="$event.stopPropagation()">
+      <button class="select-trigger" type="button" (click)="toggleLang($event)">
+        <span>{{ (language$ | async) === 'fr' ? ('settings.language.fr' | translate) : ('settings.language.en' | translate) }}</span>
+        <svg class="arrow" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <ul class="select-dropdown">
+        @for (lang of languages; track lang.value) {
+          <li
+            class="select-option"
+            [class.active]="(language$ | async) === lang.value"
+            (click)="setLanguage(lang.value)"
+          >
+            {{ lang.labelKey | translate }}
+          </li>
+        }
+      </ul>
+    </div>
+  </section>
+</div>
