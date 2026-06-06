@@ -2,6 +2,7 @@
   "app.subtitle": "Virtual Piano",
   "nav.piano": "Piano",
   "nav.learn": "Learn",
+  "nav.scale": "Scale",
   "nav.scores": "Sheet Music",
   "nav.settings": "Settings",
   "settings.title": "Settings",
@@ -12,5 +13,13 @@
   "settings.notation.anglo.hint": "(C, D, E…)",
   "settings.language.title": "Language",
   "settings.language.fr": "French",
-  "settings.language.en": "English"
+  "settings.language.en": "English",
+  "scale.title": "Scale",
+  "scale.root.label": "Root",
+  "scale.root.none": "None",
+  "scale.type.label": "Type",
+  "scale.type.major": "Major",
+  "scale.type.minor": "Minor",
+  "scale.type.harmonicMinor": "Harmonic minor",
+  "scale.type.harmonic-minor": "Harmonic minor"
 }

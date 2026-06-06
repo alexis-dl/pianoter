@@ -2,6 +2,7 @@
   "app.subtitle": "Piano virtuel",
   "nav.piano": "Piano",
   "nav.learn": "Apprendre",
+  "nav.scale": "Gamme",
   "nav.scores": "Partitions",
   "nav.settings": "Paramètres",
   "settings.title": "Paramètres",
@@ -12,5 +13,13 @@
   "settings.notation.anglo.hint": "(C, D, E…)",
   "settings.language.title": "Langue",
   "settings.language.fr": "Français",
-  "settings.language.en": "Anglais"
+  "settings.language.en": "Anglais",
+  "scale.title": "Gamme",
+  "scale.root.label": "Fondamentale",
+  "scale.root.none": "Aucune",
+  "scale.type.label": "Type",
+  "scale.type.major": "Majeur",
+  "scale.type.minor": "Mineur",
+  "scale.type.harmonicMinor": "Mineur harmonique",
+  "scale.type.harmonic-minor": "Mineur harmonique"
 }

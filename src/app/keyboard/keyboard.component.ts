@@ -1,7 +1,9 @@
-import { Component, OnInit, OnDestroy, HostListener, inject } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, HostListener, inject } from '@angular/core';
 import { IPianoKey } from './ipiano-key';
 import { CommonModule } from '@angular/common';
+import { combineLatest, Subscription } from 'rxjs';
 import { NoteStateService } from '../note-state.service';
+import { ScaleService } from '../scale/scale.service';
 // notes range will be generated dynamically (C2 to C6)
 
 @Component({
@@ -12,9 +14,16 @@ import { NoteStateService } from '../note-state.service';
   standalone: true,
 })
 export class KeyboardComponent implements OnInit, OnDestroy {
+  @Input() highlightScale = false;
+
   private noteState = inject(NoteStateService);
+  private scaleService = inject(ScaleService);
+  private scaleSub?: Subscription;
+
   pianoKeys: IPianoKey[];
   highlightedKeyIds: Set<number> = new Set();
+  protected scaleKeyIds = new Set<number>();
+  protected rootKeyIds = new Set<number>();
 
   // list of 49 notes from C2 to C6
   private fullNotes: string[] = [];
@@ -186,8 +195,23 @@ export class KeyboardComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    // Always use AZERTY keyboard layout
     this.keyboardMap = this.azertyMap;
+    this.scaleSub = combineLatest([
+      this.scaleService.activePitchClasses$,
+      this.scaleService.root$,
+    ]).subscribe(([pitchClasses, root]) => {
+      const scale = new Set<number>();
+      const roots = new Set<number>();
+      if (pitchClasses !== null && root !== null) {
+        this.keyIdToNoteIndex.forEach((noteIndex, keyId) => {
+          const pc = noteIndex % 12;
+          if (pc === root % 12) roots.add(keyId);
+          else if (pitchClasses.has(pc)) scale.add(keyId);
+        });
+      }
+      this.scaleKeyIds = scale;
+      this.rootKeyIds = roots;
+    });
   }
 
   @HostListener('document:keydown', ['$event'])
@@ -222,6 +246,7 @@ export class KeyboardComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.noteState.reset();
+    this.scaleSub?.unsubscribe();
   }
 
   private async startNoteByIndex(noteIndex: number) {

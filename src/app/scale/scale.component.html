@@ -1,0 +1,60 @@
+<div class="scale-view" (click)="$event.stopPropagation()">
+  <h2>{{ 'scale.title' | translate }}</h2>
+
+  <div class="selects-row">
+
+    <!-- Root note -->
+    <div class="select-block">
+      <label class="select-label">{{ 'scale.root.label' | translate }}</label>
+      <div class="custom-select" [class.open]="rootOpen">
+        <button class="select-trigger" type="button" (click)="toggleRoot($event)">
+          <span>{{ (rootLabel$ | async) ?? ('scale.root.none' | translate) }}</span>
+          <svg class="arrow" viewBox="0 0 10 6" fill="none">
+            <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <ul class="select-dropdown">
+          <li class="select-option" [class.active]="(root$ | async) === null" (click)="setRoot(null)">
+            {{ 'scale.root.none' | translate }}
+          </li>
+          @for (i of noteIndices; track i) {
+            <li
+              class="select-option"
+              [class.active]="(root$ | async) === i"
+              (click)="setRoot(i)"
+            >
+              {{ noteName(i, (notation$ | async)!) }}
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+
+    <!-- Scale type -->
+    <div class="select-block">
+      <label class="select-label">{{ 'scale.type.label' | translate }}</label>
+      <div class="custom-select" [class.open]="typeOpen">
+        <button class="select-trigger" type="button" (click)="toggleType($event)">
+          <span>{{ ('scale.type.' + (type$ | async)) | translate }}</span>
+          <svg class="arrow" viewBox="0 0 10 6" fill="none">
+            <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <ul class="select-dropdown">
+          @for (st of scaleTypes; track st.value) {
+            <li
+              class="select-option"
+              [class.active]="(type$ | async) === st.value"
+              (click)="setType(st.value)"
+            >
+              {{ st.labelKey | translate }}
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+  <app-keyboard [highlightScale]="true"></app-keyboard>
+</div>

@@ -53,6 +53,14 @@ ul#piano li div.anchor {
   user-select: none;
 }
 
+ul#piano li div.anchor.inScale {
+  background: linear-gradient(175deg, #eef6ff, #d5eaff);
+}
+
+ul#piano li div.anchor.isRoot {
+  background: linear-gradient(175deg, #d8eaff, #bdd8ff);
+}
+
 ul#piano li div.anchor:active,
 ul#piano li div.anchor.keyPressed {
   background: linear-gradient(175deg, #daeaff, #b8d4ff);
@@ -81,6 +89,14 @@ ul#piano li span {
     0 4px 8px rgba(0, 0, 0, 0.4);
   transition: background 0.06s ease, box-shadow 0.06s ease, transform 0.06s ease;
   user-select: none;
+}
+
+ul#piano li span.inScale {
+  background: linear-gradient(175deg, #3a5080, #243560);
+}
+
+ul#piano li span.isRoot {
+  background: linear-gradient(175deg, #2a4070, #162848);
 }
 
 ul#piano li span:active,
