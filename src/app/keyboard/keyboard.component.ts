@@ -227,8 +227,8 @@ export class KeyboardComponent implements OnInit, OnDestroy {
   private async startNoteByIndex(noteIndex: number) {
     const note = this.fullNotes[noteIndex];
     const keyIds = this.noteToKeyIds.get(noteIndex) || [];
+    this.stopAudio(noteIndex);
     keyIds.forEach((keyId) => this.highlightedKeyIds.add(keyId));
-    this.stopNoteByIndex(noteIndex, 0);
     this.noteState.press(noteIndex);
 
     if (this.audioContext.state === 'suspended') {
@@ -259,7 +259,10 @@ export class KeyboardComponent implements OnInit, OnDestroy {
     const keyIds = this.noteToKeyIds.get(noteIndex) || [];
     keyIds.forEach((keyId) => this.highlightedKeyIds.delete(keyId));
     this.noteState.release(noteIndex);
+    this.stopAudio(noteIndex, fadeTime);
+  }
 
+  private stopAudio(noteIndex: number, fadeTime = 0) {
     const nodes = this.activeNodes.get(noteIndex);
     if (nodes) {
       const { source, gain } = nodes;
