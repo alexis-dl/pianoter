@@ -8,12 +8,13 @@
     <div class="app-shell">
       <header class="app-header">
         <h1 class="app-title">Pianoter</h1>
-        <p class="app-subtitle">Virtual Piano</p>
+        <p class="app-subtitle">{{ 'app.subtitle' | translate }}</p>
       </header>
       <nav class="app-nav">
-        <a class="nav-item" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Piano</a>
-        <a class="nav-item" routerLink="/apprendre" routerLinkActive="active">Apprendre</a>
-        <a class="nav-item" href="#">Partitions</a>
+        <a class="nav-item" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">{{ 'nav.piano' | translate }}</a>
+        <a class="nav-item" routerLink="/apprendre" routerLinkActive="active">{{ 'nav.learn' | translate }}</a>
+        <a class="nav-item" href="#">{{ 'nav.scores' | translate }}</a>
+        <a class="nav-item" routerLink="/parameters" routerLinkActive="active">{{ 'nav.settings' | translate }}</a>
       </nav>
 
       <router-outlet></router-outlet>

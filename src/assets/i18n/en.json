@@ -1,0 +1,16 @@
+{
+  "app.subtitle": "Virtual Piano",
+  "nav.piano": "Piano",
+  "nav.learn": "Learn",
+  "nav.scores": "Sheet Music",
+  "nav.settings": "Settings",
+  "settings.title": "Settings",
+  "settings.notation.title": "Note notation system",
+  "settings.notation.latin": "Latin",
+  "settings.notation.latin.hint": "(Do, Ré, Mi…)",
+  "settings.notation.anglo": "Anglo-Saxon",
+  "settings.notation.anglo.hint": "(C, D, E…)",
+  "settings.language.title": "Language",
+  "settings.language.fr": "French",
+  "settings.language.en": "English"
+}
