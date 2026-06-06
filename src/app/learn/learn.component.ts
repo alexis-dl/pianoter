@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { AsyncPipe, NgFor, NgIf } from '@angular/common';
 import { KeyboardComponent } from '../keyboard/keyboard.component';
 import { NoteStateService } from '../note-state.service';
+import { SettingsService } from '../settings.service';
 
 @Component({
   selector: 'app-learn',
@@ -12,4 +13,5 @@ import { NoteStateService } from '../note-state.service';
 })
 export class LearnComponent {
   protected display$ = inject(NoteStateService).display$;
+  protected settings = inject(SettingsService);
 }

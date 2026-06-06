@@ -6,7 +6,7 @@ import { ScaleComponent } from './scale/scale.component';
 
 export const routes: Routes = [
   { path: '', component: PianoComponent },
-  { path: 'apprendre', component: LearnComponent },
+  { path: 'learn', component: LearnComponent },
   { path: 'scale', component: ScaleComponent },
-  { path: 'parameters', component: ParametersComponent },
+  { path: 'settings', component: ParametersComponent },
 ];

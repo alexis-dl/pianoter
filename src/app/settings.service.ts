@@ -31,7 +31,7 @@ export class SettingsService {
   }
 
   private readonly _keyboardSize$ = new BehaviorSubject<KeyboardSize>(
-    (Number(localStorage.getItem('keyboardSize')) as KeyboardSize) || 4
+    (Number(localStorage.getItem('keyboardSize')) as KeyboardSize) || 3
   );
   readonly keyboardSize$ = this._keyboardSize$.asObservable();
 

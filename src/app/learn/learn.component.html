@@ -5,5 +5,5 @@
       <span class="chip" *ngFor="let note of (display$ | async)?.noteNames">{{ note }}</span>
     </div>
   </div>
-  <app-keyboard></app-keyboard>
+  <app-keyboard [size]="(settings.keyboardSize$ | async) ?? 3"></app-keyboard>
 </div>

@@ -7,7 +7,7 @@ import { SettingsService } from '../settings.service';
   selector: 'app-piano',
   standalone: true,
   imports: [KeyboardComponent, AsyncPipe],
-  template: '<app-keyboard [size]="(settings.keyboardSize$ | async) ?? 4"></app-keyboard>',
+  template: '<app-keyboard [size]="(settings.keyboardSize$ | async) ?? 3"></app-keyboard>',
 })
 export class PianoComponent {
   protected settings = inject(SettingsService);
