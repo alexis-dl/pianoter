@@ -1,10 +1,14 @@
-import { Component, Input, OnInit, OnDestroy, HostListener, inject } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, OnDestroy, SimpleChanges, HostListener, inject } from '@angular/core';
 import { IPianoKey } from './ipiano-key';
 import { CommonModule } from '@angular/common';
 import { combineLatest, Subscription } from 'rxjs';
 import { NoteStateService } from '../note-state.service';
 import { ScaleService } from '../scale/scale.service';
-// notes range will be generated dynamically (C2 to C6)
+
+const BASE_NOTES = ['C', 'Cs', 'D', 'Ds', 'E', 'F', 'Fs', 'G', 'Gs', 'A', 'As', 'B'];
+const WHITE_IN_OCTAVE = [0, 2, 4, 5, 7, 9, 11];
+const HAS_BLACK_LEFT = new Set([2, 4, 7, 9, 11]);
+const START_OCTAVE: Record<number, number> = { 1: 4, 2: 3, 3: 3, 4: 2 };
 
 @Component({
   selector: 'app-keyboard',
@@ -13,235 +17,57 @@ import { ScaleService } from '../scale/scale.service';
   imports: [CommonModule],
   standalone: true,
 })
-export class KeyboardComponent implements OnInit, OnDestroy {
+export class KeyboardComponent implements OnInit, OnChanges, OnDestroy {
   @Input() highlightScale = false;
+  @Input() size: 1 | 2 | 3 | 4 = 4;
 
   private noteState = inject(NoteStateService);
   private scaleService = inject(ScaleService);
   private scaleSub?: Subscription;
+  private lastPitchClasses: Set<number> | null = null;
+  private lastRoot: number | null = null;
 
-  pianoKeys: IPianoKey[];
-  highlightedKeyIds: Set<number> = new Set();
+  pianoKeys: IPianoKey[] = [];
+  highlightedKeyIds = new Set<number>();
   protected scaleKeyIds = new Set<number>();
   protected rootKeyIds = new Set<number>();
 
-  // list of 49 notes from C2 to C6
   private fullNotes: string[] = [];
+  private noteToKeyIds = new Map<number, number[]>();
+  private keyIdToNoteIndex = new Map<number, number>();
 
-  // QWERTY mapping
-  private qwertyMap: { [key: string]: number } = {
-    q: 0, // Q -> C
-    '2': 1, // 2 -> C#
-    w: 2, // W -> D
-    '3': 3, // 3 -> D#
-    e: 4, // E -> E
-    r: 5, // R -> F
-    '5': 6, // 5 -> F#
-    t: 7, // T -> G
-    '6': 8, // 6 -> G#
-    y: 9, // Y -> A
-    '7': 10, // 7 -> A#
-    u: 11, // U -> B
+  private readonly audioContext = new AudioContext();
+  private readonly audioBuffers = new Map<string, AudioBuffer>();
+  private readonly activeNodes = new Map<number, { source: AudioBufferSourceNode; gain: GainNode }>();
+
+  // AZERTY mapping — indices are relative to the keyboard's first note
+  private readonly azertyMap: Record<string, number> = {
+    a:0, z:1, e:2, r:3, t:4, y:5, u:6, i:7, o:8, p:9, '[':10, ']':11,
+    q:12, s:13, d:14, f:15, g:16, h:17, j:18, k:19, l:20, m:21, 'ù':22, '*':23,
+    w:24, x:25, c:26, v:27, b:28, n:29, ',':30, ';':31, ':':32, '/':33, '?':34, '.':35,
+    '1':36, '2':37, '3':38, '4':39, '5':40, '6':41, '7':42, '8':43, '9':44, '0':45, '-':46, '=':47,
+    '`':48,
   };
 
-  // AZERTY mapping (French/Belgian) - full 49 notes from C2 to C6
-  private azertyMap: { [key: string]: number } = {
-    // Row 1: C2-B2 (indices 0-11)
-    a: 0, // A -> C2
-    z: 1, // Z -> C#2
-    e: 2, // E -> D2
-    r: 3, // R -> D#2
-    t: 4, // T -> E2
-    y: 5, // Y -> F2
-    u: 6, // U -> F#2
-    i: 7, // I -> G2
-    o: 8, // O -> G#2
-    p: 9, // P -> A2
-    '[': 10, // [ -> A#2
-    ']': 11, // ] -> B2
+  private keyboardMap = this.azertyMap;
 
-    // Row 2: C3-B3 (indices 12-23)
-    q: 12, // Q -> C3
-    s: 13, // S -> C#3
-    d: 14, // D -> D3
-    f: 15, // F -> D#3
-    g: 16, // G -> E3
-    h: 17, // H -> F3
-    j: 18, // J -> F#3
-    k: 19, // K -> G3
-    l: 20, // L -> G#3
-    m: 21, // M -> A3
-    ù: 22, // Ù -> A#3
-    '*': 23, // * -> B3
-
-    // Row 3: C4-B4 (indices 24-35)
-    w: 24, // W -> C4
-    x: 25, // X -> C#4
-    c: 26, // C -> D4
-    v: 27, // V -> D#4
-    b: 28, // B -> E4
-    n: 29, // N -> F4
-    ',': 30, // , -> F#4
-    ';': 31, // ; -> G4
-    ':': 32, // : -> G#4
-    '/': 33, // / -> A4
-    '?': 34, // ? -> A#4
-    '.': 35, // . -> B4
-
-    // Row 4: C5-B5 (indices 36-47)
-    '1': 36, // 1 -> C5
-    '2': 37, // 2 -> C#5
-    '3': 38, // 3 -> D5
-    '4': 39, // 4 -> D#5
-    '5': 40, // 5 -> E5
-    '6': 41, // 6 -> F5
-    '7': 42, // 7 -> F#5
-    '8': 43, // 8 -> G5
-    '9': 44, // 9 -> G#5
-    '0': 45, // 0 -> A5
-    '-': 46, // - -> A#5
-    '=': 47, // = -> B5
-
-    // Extra: C6 (index 48)
-    '`': 48, // ` -> C6
-  };
-
-  private keyboardMap: { [key: string]: number } = this.qwertyMap;
-
-  private noteToKeyIds: Map<number, number[]> = new Map();
-  private keyIdToNoteIndex: Map<number, number> = new Map();
-  private audioContext = new AudioContext();
-  private audioBuffers: Map<string, AudioBuffer> = new Map();
-  private activeNodes: Map<number, { source: AudioBufferSourceNode; gain: GainNode }> = new Map();
-
-  constructor() {
-    // build key definitions (unchanged)
-    this.pianoKeys = [
-      { whiteKeyId: 16 },
-      { whiteKeyId: 18, blackKeyId: 17 },
-      { whiteKeyId: 20, blackKeyId: 19 },
-      { whiteKeyId: 21 },
-      { whiteKeyId: 23, blackKeyId: 22 },
-      { whiteKeyId: 25, blackKeyId: 24 },
-      { whiteKeyId: 27, blackKeyId: 26 },
-      { whiteKeyId: 28 },
-      { whiteKeyId: 30, blackKeyId: 29 },
-      { whiteKeyId: 32, blackKeyId: 31 },
-      { whiteKeyId: 33 },
-      { whiteKeyId: 35, blackKeyId: 34 },
-      { whiteKeyId: 37, blackKeyId: 36 },
-      { whiteKeyId: 39, blackKeyId: 38 },
-      { whiteKeyId: 40 },
-      { whiteKeyId: 42, blackKeyId: 41 },
-      { whiteKeyId: 44, blackKeyId: 43 },
-      { whiteKeyId: 45 },
-      { whiteKeyId: 47, blackKeyId: 46 },
-      { whiteKeyId: 49, blackKeyId: 48 },
-      { whiteKeyId: 51, blackKeyId: 50 },
-      { whiteKeyId: 52 },
-      { whiteKeyId: 54, blackKeyId: 53 },
-      { whiteKeyId: 56, blackKeyId: 55 },
-      { whiteKeyId: 57 },
-      { whiteKeyId: 59, blackKeyId: 58 },
-      { whiteKeyId: 61, blackKeyId: 60 },
-      { whiteKeyId: 63, blackKeyId: 62 },
-      { whiteKeyId: 64 },
-    ];
-
-    // build fullNotes array
-    const base = [
-      'C',
-      'Cs',
-      'D',
-      'Ds',
-      'E',
-      'F',
-      'Fs',
-      'G',
-      'Gs',
-      'A',
-      'As',
-      'B',
-    ];
-    // C2..B2
-    base.forEach((n) => this.fullNotes.push(`${n}2`));
-    // octaves 3..5
-    for (let o = 3; o <= 5; o++)
-      base.forEach((n) => this.fullNotes.push(`${n}${o}`));
-    // C6 final
-    this.fullNotes.push('C6');
-
-    // flatten pianoKeys then sort by keyId to preserve chromatic order
-    const flatKeys: number[] = this.pianoKeys
-      .flatMap(k => [k.whiteKeyId, k.blackKeyId].filter((x): x is number => x !== undefined))
-      .sort((a, b) => a - b);
-
-    // assign each key in sequence its note index
-    flatKeys.forEach((keyId, idx) => {
-      this.noteToKeyIds.set(idx, [keyId]);
-      this.keyIdToNoteIndex.set(keyId, idx);
-    });
-
-    // validation: black keys must correspond to sharps
-    this.pianoKeys.forEach(k => {
-      if (k.blackKeyId !== undefined) {
-        const idx = this.keyIdToNoteIndex.get(k.blackKeyId!);
-        const note = idx !== undefined ? this.fullNotes[idx] : undefined;
-        if (!note || !note.includes('s')) {
-          console.warn(`Black key ${k.blackKeyId} mapped to non-sharp note ${note}`);
-        }
-      }
-    });
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['size'] && !changes['size'].isFirstChange()) {
+      this.buildKeys();
+      this.updateScaleHighlight(this.lastPitchClasses, this.lastRoot);
+    }
   }
 
-  ngOnInit() {
-    this.keyboardMap = this.azertyMap;
+  ngOnInit(): void {
+    this.buildKeys();
     this.scaleSub = combineLatest([
       this.scaleService.activePitchClasses$,
       this.scaleService.root$,
     ]).subscribe(([pitchClasses, root]) => {
-      const scale = new Set<number>();
-      const roots = new Set<number>();
-      if (pitchClasses !== null && root !== null) {
-        this.keyIdToNoteIndex.forEach((noteIndex, keyId) => {
-          const pc = noteIndex % 12;
-          if (pc === root % 12) roots.add(keyId);
-          else if (pitchClasses.has(pc)) scale.add(keyId);
-        });
-      }
-      this.scaleKeyIds = scale;
-      this.rootKeyIds = roots;
+      this.lastPitchClasses = pitchClasses;
+      this.lastRoot = root;
+      this.updateScaleHighlight(pitchClasses, root);
     });
-  }
-
-  @HostListener('document:keydown', ['$event'])
-  handleKeyDown(event: KeyboardEvent) {
-    if (event.repeat) return;
-    const key = event.key.toLowerCase();
-    if (this.keyboardMap.hasOwnProperty(key)) {
-      event.preventDefault();
-      this.startNoteByIndex(this.keyboardMap[key]);
-    }
-  }
-
-  @HostListener('document:keyup', ['$event'])
-  handleKeyUp(event: KeyboardEvent) {
-    const key = event.key.toLowerCase();
-    if (this.keyboardMap.hasOwnProperty(key)) {
-      this.stopNoteByIndex(this.keyboardMap[key]);
-    }
-  }
-
-  keyPress(keyNumber: number) {
-    const noteIndex = this.keyIdToNoteIndex.get(keyNumber);
-    if (noteIndex === undefined) return;
-    this.startNoteByIndex(noteIndex);
-  }
-
-  keyRelease(keyNumber: number) {
-    const noteIndex = this.keyIdToNoteIndex.get(keyNumber);
-    if (noteIndex === undefined) return;
-    this.stopNoteByIndex(noteIndex);
   }
 
   ngOnDestroy(): void {
@@ -249,16 +75,99 @@ export class KeyboardComponent implements OnInit, OnDestroy {
     this.scaleSub?.unsubscribe();
   }
 
-  private async startNoteByIndex(noteIndex: number) {
+  private buildKeys(): void {
+    // Stop any playing audio
+    this.activeNodes.forEach(({ source }) => { try { source.stop(); } catch { /* already stopped */ } });
+    this.activeNodes.clear();
+    this.highlightedKeyIds.clear();
+    this.noteState.reset();
+
+    const octaves = this.size;
+    const startOct = START_OCTAVE[octaves];
+
+    // Build fullNotes
+    this.fullNotes = [];
+    for (let o = startOct; o < startOct + octaves; o++) {
+      BASE_NOTES.forEach(n => this.fullNotes.push(`${n}${o}`));
+    }
+    this.fullNotes.push(`C${startOct + octaves}`);
+
+    // Build pianoKeys — keyId === noteIndex for simplicity
+    this.pianoKeys = [];
+    for (let oct = 0; oct < octaves; oct++) {
+      for (const pos of WHITE_IN_OCTAVE) {
+        const idx = oct * 12 + pos;
+        this.pianoKeys.push(HAS_BLACK_LEFT.has(pos)
+          ? { whiteKeyId: idx, blackKeyId: idx - 1 }
+          : { whiteKeyId: idx });
+      }
+    }
+    this.pianoKeys.push({ whiteKeyId: octaves * 12 });
+
+    // Build maps
+    this.noteToKeyIds.clear();
+    this.keyIdToNoteIndex.clear();
+    for (let i = 0; i < this.fullNotes.length; i++) {
+      this.noteToKeyIds.set(i, [i]);
+      this.keyIdToNoteIndex.set(i, i);
+    }
+  }
+
+  private updateScaleHighlight(pitchClasses: Set<number> | null, root: number | null): void {
+    const scale = new Set<number>();
+    const roots = new Set<number>();
+    if (pitchClasses !== null && root !== null) {
+      this.keyIdToNoteIndex.forEach((noteIndex, keyId) => {
+        const pc = noteIndex % 12;
+        if (pc === root % 12) roots.add(keyId);
+        else if (pitchClasses.has(pc)) scale.add(keyId);
+      });
+    }
+    this.scaleKeyIds = scale;
+    this.rootKeyIds = roots;
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  handleKeyDown(event: KeyboardEvent): void {
+    if (event.repeat) return;
+    const key = event.key.toLowerCase();
+    const idx = this.keyboardMap[key];
+    if (idx !== undefined && idx < this.fullNotes.length) {
+      event.preventDefault();
+      this.startNoteByIndex(idx);
+    }
+  }
+
+  @HostListener('document:keyup', ['$event'])
+  handleKeyUp(event: KeyboardEvent): void {
+    const key = event.key.toLowerCase();
+    const idx = this.keyboardMap[key];
+    if (idx !== undefined && idx < this.fullNotes.length) {
+      this.stopNoteByIndex(idx);
+    }
+  }
+
+  keyPress(keyId: number): void {
+    const noteIndex = this.keyIdToNoteIndex.get(keyId);
+    if (noteIndex === undefined) return;
+    this.startNoteByIndex(noteIndex);
+  }
+
+  keyRelease(keyId: number): void {
+    const noteIndex = this.keyIdToNoteIndex.get(keyId);
+    if (noteIndex === undefined) return;
+    this.stopNoteByIndex(noteIndex);
+  }
+
+  private async startNoteByIndex(noteIndex: number): Promise<void> {
     const note = this.fullNotes[noteIndex];
+    if (!note) return;
     const keyIds = this.noteToKeyIds.get(noteIndex) || [];
     this.stopAudio(noteIndex);
-    keyIds.forEach((keyId) => this.highlightedKeyIds.add(keyId));
+    keyIds.forEach(id => this.highlightedKeyIds.add(id));
     this.noteState.press(noteIndex);
 
-    if (this.audioContext.state === 'suspended') {
-      await this.audioContext.resume();
-    }
+    if (this.audioContext.state === 'suspended') await this.audioContext.resume();
 
     if (!this.audioBuffers.has(note)) {
       const response = await fetch(`assets/sounds/piano-sounds/${note}.mp3`);
@@ -269,33 +178,29 @@ export class KeyboardComponent implements OnInit, OnDestroy {
 
     const source = this.audioContext.createBufferSource();
     source.buffer = this.audioBuffers.get(note)!;
-
     const gain = this.audioContext.createGain();
     gain.gain.setValueAtTime(1, this.audioContext.currentTime);
-
     source.connect(gain);
     gain.connect(this.audioContext.destination);
     source.start();
-
     this.activeNodes.set(noteIndex, { source, gain });
   }
 
-  private stopNoteByIndex(noteIndex: number, fadeTime = 0.15) {
+  private stopNoteByIndex(noteIndex: number, fadeTime = 0.15): void {
     const keyIds = this.noteToKeyIds.get(noteIndex) || [];
-    keyIds.forEach((keyId) => this.highlightedKeyIds.delete(keyId));
+    keyIds.forEach(id => this.highlightedKeyIds.delete(id));
     this.noteState.release(noteIndex);
     this.stopAudio(noteIndex, fadeTime);
   }
 
-  private stopAudio(noteIndex: number, fadeTime = 0) {
+  private stopAudio(noteIndex: number, fadeTime = 0): void {
     const nodes = this.activeNodes.get(noteIndex);
-    if (nodes) {
-      const { source, gain } = nodes;
-      const now = this.audioContext.currentTime;
-      gain.gain.setValueAtTime(gain.gain.value, now);
-      gain.gain.linearRampToValueAtTime(0, now + fadeTime);
-      source.stop(now + fadeTime);
-      this.activeNodes.delete(noteIndex);
-    }
+    if (!nodes) return;
+    const { source, gain } = nodes;
+    const now = this.audioContext.currentTime;
+    gain.gain.setValueAtTime(gain.gain.value, now);
+    gain.gain.linearRampToValueAtTime(0, now + fadeTime);
+    source.stop(now + fadeTime);
+    this.activeNodes.delete(noteIndex);
   }
 }

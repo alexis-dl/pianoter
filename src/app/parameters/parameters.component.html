@@ -49,4 +49,22 @@
       </ul>
     </div>
   </section>
+
+  <section class="setting-group">
+    <h3>{{ 'settings.keyboardSize.title' | translate }}</h3>
+    <div class="notation-options">
+      @for (s of keySizes; track s.value) {
+        <label class="option" [class.selected]="(keyboardSize$ | async) === s.value">
+          <input
+            type="radio"
+            name="keyboardSize"
+            [value]="s.value"
+            [checked]="(keyboardSize$ | async) === s.value"
+            (change)="setKeyboardSize(s.value)"
+          />
+          <span>{{ s.labelKey | translate }}</span>
+        </label>
+      }
+    </div>
+  </section>
 </div>
