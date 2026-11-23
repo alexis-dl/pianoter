@@ -8,11 +8,10 @@ import { KeyboardComponent } from '../keyboard/keyboard.component';
 import { noteName, rootSpelling, spellScale } from '../music/music-theory';
 
 @Component({
-  selector: 'app-scale',
-  standalone: true,
-  imports: [AsyncPipe, TranslatePipe, KeyboardComponent],
-  templateUrl: './scale.component.html',
-  styleUrls: ['./scale.component.scss'],
+    selector: 'app-scale',
+    imports: [AsyncPipe, TranslatePipe, KeyboardComponent],
+    templateUrl: './scale.component.html',
+    styleUrls: ['./scale.component.scss']
 })
 export class ScaleComponent {
   private scaleService = inject(ScaleService);

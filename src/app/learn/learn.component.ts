@@ -5,11 +5,10 @@ import { NoteStateService } from '../note-state.service';
 import { SettingsService } from '../settings.service';
 
 @Component({
-  selector: 'app-learn',
-  standalone: true,
-  imports: [KeyboardComponent, AsyncPipe, NgFor, NgIf],
-  templateUrl: './learn.component.html',
-  styleUrls: ['./learn.component.scss'],
+    selector: 'app-learn',
+    imports: [KeyboardComponent, AsyncPipe, NgFor, NgIf],
+    templateUrl: './learn.component.html',
+    styleUrls: ['./learn.component.scss']
 })
 export class LearnComponent {
   protected display$ = inject(NoteStateService).display$;

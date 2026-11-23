@@ -4,11 +4,10 @@ import { SettingsService, NotationSystem, Language, KeyboardSize } from '../sett
 import { TranslatePipe } from '../translate.pipe';
 
 @Component({
-  selector: 'app-parameters',
-  standalone: true,
-  imports: [AsyncPipe, TranslatePipe],
-  templateUrl: './parameters.component.html',
-  styleUrls: ['./parameters.component.scss'],
+    selector: 'app-parameters',
+    imports: [AsyncPipe, TranslatePipe],
+    templateUrl: './parameters.component.html',
+    styleUrls: ['./parameters.component.scss']
 })
 export class ParametersComponent {
   protected settings = inject(SettingsService);

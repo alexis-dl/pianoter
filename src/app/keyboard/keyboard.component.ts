@@ -26,11 +26,10 @@ const MIN_WHITE_KEY_PX = 26;
 const PAGE_MARGIN_PX = 60;
 
 @Component({
-  selector: 'app-keyboard',
-  templateUrl: './keyboard.component.html',
-  styleUrls: ['./keyboard.component.scss'],
-  imports: [CommonModule],
-  standalone: true,
+    selector: 'app-keyboard',
+    templateUrl: './keyboard.component.html',
+    styleUrls: ['./keyboard.component.scss'],
+    imports: [CommonModule]
 })
 export class KeyboardComponent implements OnInit, OnChanges, OnDestroy {
   @Input() highlightScale = false;
