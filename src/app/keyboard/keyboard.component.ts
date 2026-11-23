@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { combineLatest, Subscription } from 'rxjs';
 import { NoteStateService } from '../note-state.service';
 import { ScaleService } from '../scale/scale.service';
+import { PianoAudioService, PlayingNote } from '../audio/piano-audio.service';
 
 const BASE_NOTES = ['C', 'Cs', 'D', 'Ds', 'E', 'F', 'Fs', 'G', 'Gs', 'A', 'As', 'B'];
 const WHITE_IN_OCTAVE = [0, 2, 4, 5, 7, 9, 11];
@@ -36,9 +37,15 @@ export class KeyboardComponent implements OnInit, OnChanges, OnDestroy {
   private noteToKeyIds = new Map<number, number[]>();
   private keyIdToNoteIndex = new Map<number, number>();
 
-  private readonly audioContext = new AudioContext();
-  private readonly audioBuffers = new Map<string, AudioBuffer>();
-  private readonly activeNodes = new Map<number, { source: AudioBufferSourceNode; gain: GainNode }>();
+  private audio = inject(PianoAudioService);
+  /** Notes sounding, by note index. */
+  private readonly playing = new Map<number, PlayingNote>();
+  /**
+   * Press in progress for each held note: a sample that finishes loading
+   * after its key was released (or pressed again) must not be played.
+   */
+  private readonly presses = new Map<number, number>();
+  private lastPress = 0;
 
   // AZERTY mapping — indices are relative to the keyboard's first note
   private readonly azertyMap: Record<string, number> = {
@@ -71,14 +78,19 @@ export class KeyboardComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.stopAll();
     this.noteState.reset();
     this.scaleSub?.unsubscribe();
   }
 
+  private stopAll(): void {
+    this.playing.forEach(note => note.stop());
+    this.playing.clear();
+    this.presses.clear();
+  }
+
   private buildKeys(): void {
-    // Stop any playing audio
-    this.activeNodes.forEach(({ source }) => { try { source.stop(); } catch { /* already stopped */ } });
-    this.activeNodes.clear();
+    this.stopAll();
     this.highlightedKeyIds.clear();
     this.noteState.reset();
 
@@ -167,40 +179,29 @@ export class KeyboardComponent implements OnInit, OnChanges, OnDestroy {
     keyIds.forEach(id => this.highlightedKeyIds.add(id));
     this.noteState.press(noteIndex);
 
-    if (this.audioContext.state === 'suspended') await this.audioContext.resume();
+    const press = ++this.lastPress;
+    this.presses.set(noteIndex, press);
+    // the first time, the sample is downloaded: the key may be released
+    // (or pressed again) before it is ready
+    const buffer = await this.audio.load(note);
+    if (!buffer || this.presses.get(noteIndex) !== press) return;
 
-    if (!this.audioBuffers.has(note)) {
-      const response = await fetch(`assets/sounds/piano-sounds/${note}.mp3`);
-      const arrayBuffer = await response.arrayBuffer();
-      const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
-      this.audioBuffers.set(note, audioBuffer);
+    const playing = this.audio.play(buffer);
+    if (playing) {
+      this.playing.set(noteIndex, playing);
     }
-
-    const source = this.audioContext.createBufferSource();
-    source.buffer = this.audioBuffers.get(note)!;
-    const gain = this.audioContext.createGain();
-    gain.gain.setValueAtTime(1, this.audioContext.currentTime);
-    source.connect(gain);
-    gain.connect(this.audioContext.destination);
-    source.start();
-    this.activeNodes.set(noteIndex, { source, gain });
   }
 
   private stopNoteByIndex(noteIndex: number, fadeTime = 0.15): void {
     const keyIds = this.noteToKeyIds.get(noteIndex) || [];
     keyIds.forEach(id => this.highlightedKeyIds.delete(id));
     this.noteState.release(noteIndex);
+    this.presses.delete(noteIndex);
     this.stopAudio(noteIndex, fadeTime);
   }
 
   private stopAudio(noteIndex: number, fadeTime = 0): void {
-    const nodes = this.activeNodes.get(noteIndex);
-    if (!nodes) return;
-    const { source, gain } = nodes;
-    const now = this.audioContext.currentTime;
-    gain.gain.setValueAtTime(gain.gain.value, now);
-    gain.gain.linearRampToValueAtTime(0, now + fadeTime);
-    source.stop(now + fadeTime);
-    this.activeNodes.delete(noteIndex);
+    this.playing.get(noteIndex)?.stop(fadeTime);
+    this.playing.delete(noteIndex);
   }
 }

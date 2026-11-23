@@ -68,13 +68,16 @@ export class NoteStateService {
     const notes = this.settings.notation === 'anglo' ? NOTES_ANGLO : NOTES_LATIN;
     const chords = this.settings.notation === 'anglo' ? CHORDS_ANGLO : CHORDS_LATIN;
 
-    const pitchClasses = [...new Set([...this.activeIndices].map(i => i % 12))];
+    // from the lowest note up, whatever the order the keys were pressed in
+    const sorted = [...this.activeIndices].sort((a, b) => a - b);
+    const pitchClasses = [...new Set(sorted.map(i => i % 12))];
     const noteNames = pitchClasses.map(p => notes[p]);
 
     let label = '';
     if (pitchClasses.length === 1) {
       label = notes[pitchClasses[0]];
     } else if (pitchClasses.length === 2) {
+      // pitchClasses[0] is the lowest note: the interval goes up from it
       const diff = (pitchClasses[1] - pitchClasses[0] + 12) % 12;
       label = INTERVALS[diff] ?? noteNames.join(' + ');
     } else if (pitchClasses.length >= 3) {
