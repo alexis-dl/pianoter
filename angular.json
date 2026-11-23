@@ -15,7 +15,7 @@
       "prefix": "app",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:application",
+          "builder": "@angular/build:application",
           "options": {
             "outputPath": "dist/pianoter",
             "index": "src/index.html",
@@ -43,8 +43,8 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "2kB",
-                  "maximumError": "4kB"
+                  "maximumWarning": "4kB",
+                  "maximumError": "8kB"
                 }
               ],
               "outputHashing": "all"
@@ -58,7 +58,7 @@
           "defaultConfiguration": "production"
         },
         "serve": {
-          "builder": "@angular-devkit/build-angular:dev-server",
+          "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
               "buildTarget": "pianoter:build:production"
@@ -70,10 +70,10 @@
           "defaultConfiguration": "development"
         },
         "extract-i18n": {
-          "builder": "@angular-devkit/build-angular:extract-i18n"
+          "builder": "@angular/build:extract-i18n"
         },
         "test": {
-          "builder": "@angular-devkit/build-angular:karma",
+          "builder": "@angular/build:karma",
           "options": {
             "polyfills": [
               "zone.js",

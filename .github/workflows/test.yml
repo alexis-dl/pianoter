@@ -14,8 +14,8 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          # Angular 18 supports Node 22 at most
-          node-version: 22
+          # Angular 22: Node 22.22+ or 24.15+
+          node-version: 24
           cache: npm
 
       - run: npm ci
