@@ -1,7 +1,7 @@
-import en from '../assets/i18n/en.json';
-import fr from '../assets/i18n/fr.json';
+import en from './i18n/en.json';
+import fr from './i18n/fr.json';
 
-/** The translation files, loaded at run time, must stay in step. */
+/** The translation files, built into the app, must stay in step. */
 describe('translations', () => {
   const files: Record<string, Record<string, string>> = { fr, en };
 

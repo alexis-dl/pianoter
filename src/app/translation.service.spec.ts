@@ -1,43 +1,28 @@
-import { provideHttpClient } from '@angular/common/http';
-import {
-  HttpTestingController,
-  provideHttpClientTesting,
-} from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { SettingsService } from './settings.service';
 import { TranslationService } from './translation.service';
 
 describe('TranslationService', () => {
-  let service: TranslationService;
-  let http: HttpTestingController;
+  const create = () => {
+    TestBed.configureTestingModule({});
+    return TestBed.inject(TranslationService);
+  };
 
-  beforeEach(() => {
-    localStorage.removeItem('language');
-    TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
-    });
-    service = TestBed.inject(TranslationService);
-    http = TestBed.inject(HttpTestingController);
+  beforeEach(() => localStorage.removeItem('language'));
+  afterEach(() => localStorage.removeItem('language'));
+
+  it('translates at once, with no download', () => {
+    expect(create().t('nav.learn')).toBe('Apprendre');
   });
 
-  afterEach(() => {
-    http.verify();
-    localStorage.removeItem('language');
+  it('shows the key of a missing text', () => {
+    expect(create().t('nav.unknown')).toBe('nav.unknown');
   });
 
-  it('translates with the loaded language, and shows the key otherwise', () => {
-    service.load('fr').subscribe();
-    http.expectOne('assets/i18n/fr.json').flush({ 'nav.learn': 'Apprendre' });
-    expect(service.t('nav.learn')).toBe('Apprendre');
-    expect(service.t('nav.unknown')).toBe('nav.unknown');
-  });
-
-  it('loads the other language when the setting changes', () => {
-    service.load('fr').subscribe();
-    http.expectOne('assets/i18n/fr.json').flush({ 'nav.learn': 'Apprendre' });
-
+  it('follows the language setting, and sets the page language', () => {
+    const service = create();
     TestBed.inject(SettingsService).setLanguage('en');
-    http.expectOne('assets/i18n/en.json').flush({ 'nav.learn': 'Learn' });
     expect(service.t('nav.learn')).toBe('Learn');
+    expect(document.documentElement.lang).toBe('en');
   });
 });

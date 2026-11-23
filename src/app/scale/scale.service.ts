@@ -2,19 +2,20 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, combineLatest } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { SCALE_INTERVALS, ScaleType } from '../music/music-theory';
+import { storage } from '../storage';
 
 export type { ScaleType };
 
 /** Stored root: a pitch class from 0 (C) to 11 (B), else none. */
 function storedRoot(): number | null {
-  const raw = localStorage.getItem('scaleRoot');
+  const raw = storage.get('scaleRoot');
   const root = raw === null ? NaN : Number(raw);
   return Number.isInteger(root) && root >= 0 && root < 12 ? root : null;
 }
 
 /** Stored type, if known: an unknown one would break the scale's notes. */
 function storedType(): ScaleType {
-  const raw = localStorage.getItem('scaleType');
+  const raw = storage.get('scaleType');
   return raw !== null && raw in SCALE_INTERVALS ? (raw as ScaleType) : 'major';
 }
 
@@ -38,13 +39,13 @@ export class ScaleService {
 
   setRoot(root: number | null): void {
     root === null
-      ? localStorage.removeItem('scaleRoot')
-      : localStorage.setItem('scaleRoot', String(root));
+      ? storage.remove('scaleRoot')
+      : storage.set('scaleRoot', String(root));
     this._root$.next(root);
   }
 
   setType(type: ScaleType): void {
-    localStorage.setItem('scaleType', type);
+    storage.set('scaleType', type);
     this._type$.next(type);
   }
 }

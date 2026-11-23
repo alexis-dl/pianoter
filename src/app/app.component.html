@@ -1,23 +1,14 @@
-<!doctype html>
-<html lang="fr">
-  <head>
-    <meta charset="utf-8" />
-    <title>Pianoter</title>
-  </head>
-  <body>
-    <div class="app-shell">
-      <header class="app-header">
-        <h1 class="app-title">Pianoter</h1>
-        <p class="app-subtitle">{{ 'app.subtitle' | translate }}</p>
-      </header>
-      <nav class="app-nav">
-        <a class="nav-item" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">{{ 'nav.piano' | translate }}</a>
-        <a class="nav-item" routerLink="/learn" routerLinkActive="active">{{ 'nav.learn' | translate }}</a>
-        <a class="nav-item" routerLink="/scale" routerLinkActive="active">{{ 'nav.scale' | translate }}</a>
-<a class="nav-item" routerLink="/settings" routerLinkActive="active">{{ 'nav.settings' | translate }}</a>
-      </nav>
+<div class="app-shell">
+  <header class="app-header">
+    <h1 class="app-title">Pianoter</h1>
+    <p class="app-subtitle">{{ 'app.subtitle' | translate }}</p>
+  </header>
+  <nav class="app-nav">
+    <a class="nav-item" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">{{ 'nav.piano' | translate }}</a>
+    <a class="nav-item" routerLink="/learn" routerLinkActive="active">{{ 'nav.learn' | translate }}</a>
+    <a class="nav-item" routerLink="/scale" routerLinkActive="active">{{ 'nav.scale' | translate }}</a>
+    <a class="nav-item" routerLink="/settings" routerLinkActive="active">{{ 'nav.settings' | translate }}</a>
+  </nav>
 
-      <router-outlet></router-outlet>
-    </div>
-  </body>
-</html>
+  <router-outlet></router-outlet>
+</div>

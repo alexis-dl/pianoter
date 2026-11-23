@@ -1,32 +1,33 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { map, skip, switchMap, tap } from 'rxjs/operators';
-import { SettingsService } from './settings.service';
+import { BehaviorSubject } from 'rxjs';
+import en from './i18n/en.json';
+import fr from './i18n/fr.json';
+import { Language, SettingsService } from './settings.service';
+
+/**
+ * Texts of the interface. They are part of the app (a few kB): the app
+ * starts even when the network fails, with no download before the first
+ * screen.
+ */
+const TRANSLATIONS: Record<Language, Record<string, string>> = { fr, en };
 
 @Injectable({ providedIn: 'root' })
 export class TranslationService {
   private translations: Record<string, string> = {};
+  /** Emits when the language changes, so that the texts are redrawn. */
   private readonly _changes$ = new BehaviorSubject<void>(undefined);
   readonly changes$ = this._changes$.asObservable();
 
-  constructor(private http: HttpClient, private settings: SettingsService) {
-    this.settings.language$.pipe(
-      skip(1),
-      switchMap(lang => this.load(lang))
-    ).subscribe();
+  constructor(settings: SettingsService) {
+    settings.language$.subscribe(language => {
+      this.translations = TRANSLATIONS[language];
+      // screen readers and the browser's translation read the page's lang
+      document.documentElement.lang = language;
+      this._changes$.next();
+    });
   }
 
-  load(lang: string): Observable<void> {
-    return this.http.get<Record<string, string>>(`assets/i18n/${lang}.json`).pipe(
-      tap(data => {
-        this.translations = data;
-        this._changes$.next();
-      }),
-      map(() => undefined)
-    );
-  }
-
+  /** Text of a key in the current language, or the key if it is missing. */
   t(key: string): string {
     return this.translations[key] ?? key;
   }

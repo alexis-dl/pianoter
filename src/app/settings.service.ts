@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
+import { storage } from './storage';
 
 export type NotationSystem = 'latin' | 'anglo';
 export type Language = 'fr' | 'en';
@@ -14,7 +15,7 @@ const KEYBOARD_SIZES: KeyboardSize[] = [1, 2, 3, 4];
  * value (keyboard size 7...) would break the app.
  */
 function stored<T>(key: string, allowed: readonly T[], fallback: T): T {
-  const raw = localStorage.getItem(key);
+  const raw = storage.get(key);
   const value = allowed.find(option => String(option) === raw);
   return value ?? fallback;
 }
@@ -49,17 +50,17 @@ export class SettingsService {
   }
 
   setNotation(system: NotationSystem): void {
-    localStorage.setItem('notationSystem', system);
+    storage.set('notationSystem', system);
     this._notation$.next(system);
   }
 
   setLanguage(lang: Language): void {
-    localStorage.setItem('language', lang);
+    storage.set('language', lang);
     this._language$.next(lang);
   }
 
   setKeyboardSize(size: KeyboardSize): void {
-    localStorage.setItem('keyboardSize', String(size));
+    storage.set('keyboardSize', String(size));
     this._keyboardSize$.next(size);
   }
 }
