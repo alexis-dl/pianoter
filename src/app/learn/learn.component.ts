@@ -1,12 +1,12 @@
 import { Component, inject } from '@angular/core';
-import { AsyncPipe, NgFor, NgIf } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { KeyboardComponent } from '../keyboard/keyboard.component';
 import { NoteStateService } from '../note-state.service';
 import { SettingsService } from '../settings.service';
 
 @Component({
     selector: 'app-learn',
-    imports: [KeyboardComponent, AsyncPipe, NgFor, NgIf],
+    imports: [KeyboardComponent, AsyncPipe],
     templateUrl: './learn.component.html',
     styleUrls: ['./learn.component.scss']
 })

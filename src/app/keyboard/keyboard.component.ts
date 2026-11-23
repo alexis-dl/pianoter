@@ -10,7 +10,7 @@ import {
   inject,
 } from '@angular/core';
 import { IPianoKey } from './ipiano-key';
-import { CommonModule } from '@angular/common';
+
 import { combineLatest, Subscription } from 'rxjs';
 import { NoteStateService } from '../note-state.service';
 import { ScaleService } from '../scale/scale.service';
@@ -29,7 +29,7 @@ const PAGE_MARGIN_PX = 60;
     selector: 'app-keyboard',
     templateUrl: './keyboard.component.html',
     styleUrls: ['./keyboard.component.scss'],
-    imports: [CommonModule]
+    imports: []
 })
 export class KeyboardComponent implements OnInit, OnChanges, OnDestroy {
   @Input() highlightScale = false;

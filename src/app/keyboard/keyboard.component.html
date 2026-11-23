@@ -1,25 +1,28 @@
 <!-- pointer events: mouse, fingers (several at once) and pen alike -->
 <div id="p-wrapper" (contextmenu)="$event.preventDefault()">
   <ul id="piano">
-    <li *ngFor="let pianoKey of pianoKeys">
-      <div
-        class="anchor"
-        [class.keyPressed]="highlightedKeyIds.has(pianoKey.whiteKeyId)"
-        [class.inScale]="highlightScale && scaleKeyIds.has(pianoKey.whiteKeyId)"
-        [class.isRoot]="highlightScale && rootKeyIds.has(pianoKey.whiteKeyId)"
-        (pointerdown)="onPointerDown($event, pianoKey.whiteKeyId)"
-        (pointerenter)="onPointerEnter($event, pianoKey.whiteKeyId)"
-        (pointerleave)="onPointerLeave($event, pianoKey.whiteKeyId)"
-      ></div>
-      <span
-        *ngIf="pianoKey.blackKeyId"
-        [class.keyPressed]="highlightedKeyIds.has(pianoKey.blackKeyId)"
-        [class.inScale]="highlightScale && scaleKeyIds.has(pianoKey.blackKeyId!)"
-        [class.isRoot]="highlightScale && rootKeyIds.has(pianoKey.blackKeyId!)"
-        (pointerdown)="onPointerDown($event, pianoKey.blackKeyId!)"
-        (pointerenter)="onPointerEnter($event, pianoKey.blackKeyId!)"
-        (pointerleave)="onPointerLeave($event, pianoKey.blackKeyId!)"
-      ></span>
-    </li>
+    @for (pianoKey of pianoKeys; track pianoKey) {
+      <li>
+        <div
+          class="anchor"
+          [class.keyPressed]="highlightedKeyIds.has(pianoKey.whiteKeyId)"
+          [class.inScale]="highlightScale && scaleKeyIds.has(pianoKey.whiteKeyId)"
+          [class.isRoot]="highlightScale && rootKeyIds.has(pianoKey.whiteKeyId)"
+          (pointerdown)="onPointerDown($event, pianoKey.whiteKeyId)"
+          (pointerenter)="onPointerEnter($event, pianoKey.whiteKeyId)"
+          (pointerleave)="onPointerLeave($event, pianoKey.whiteKeyId)"
+        ></div>
+        @if (pianoKey.blackKeyId) {
+          <span
+            [class.keyPressed]="highlightedKeyIds.has(pianoKey.blackKeyId)"
+            [class.inScale]="highlightScale && scaleKeyIds.has(pianoKey.blackKeyId!)"
+            [class.isRoot]="highlightScale && rootKeyIds.has(pianoKey.blackKeyId!)"
+            (pointerdown)="onPointerDown($event, pianoKey.blackKeyId!)"
+            (pointerenter)="onPointerEnter($event, pianoKey.blackKeyId!)"
+            (pointerleave)="onPointerLeave($event, pianoKey.blackKeyId!)"
+          ></span>
+        }
+      </li>
+    }
   </ul>
 </div>
