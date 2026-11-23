@@ -1,8 +1,21 @@
+@use "sass:math";
+
 $white-key-width: 38px;
 $white-key-height: 220px;
 $black-key-width: 22px;
 $black-key-height: 130px;
 $pressed-blue: #4f9cf8;
+
+// The pages center their content, so the keyboard sets its own width: the
+// keys at their usual size, or the window's width when it is narrower (the
+// keys then share it, on a single row). The frame adds 2 x 14px.
+:host {
+  display: block;
+  width: min(
+    calc(100vw - 32px),
+    calc(var(--white-keys) * #{$white-key-width} + 28px)
+  );
+}
 
 #p-wrapper {
   background: #d0d4db;
@@ -18,8 +31,9 @@ $pressed-blue: #4f9cf8;
   animation: fadeIn 0.5s ease;
 }
 
+// one row of keys sharing the keyboard's width
 ul#piano {
-  display: block;
+  display: flex;
   height: $white-key-height + 20px;
   list-style: none;
   margin: 0;
@@ -30,11 +44,17 @@ ul#piano {
 }
 
 ul#piano li {
-  float: left;
-  display: inline;
-  width: $white-key-width;
+  flex: 1 1 0;
+  min-width: 0;
   position: relative;
   cursor: pointer;
+  // the keys are played with the fingers: no scroll, zoom, selection,
+  // tap highlight or long-press menu from the browser on them
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* White keys */
@@ -75,8 +95,9 @@ ul#piano li div.anchor.keyPressed {
 ul#piano li span {
   position: absolute;
   top: 0;
-  left: -($black-key-width * 0.5);
-  width: $black-key-width;
+  // proportional to the white key, centered on the line between two keys
+  width: math.percentage(math.div($black-key-width, $white-key-width));
+  left: -(math.percentage(math.div($black-key-width, $white-key-width)) * 0.5);
   height: $black-key-height;
   background: linear-gradient(175deg, #3a3d42, #1c1e21);
   z-index: 10;

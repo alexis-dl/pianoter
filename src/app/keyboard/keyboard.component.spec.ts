@@ -85,6 +85,62 @@ describe('KeyboardComponent', () => {
     expect(audio.played).toEqual(['C4']);
   });
 
+  describe('pointers', () => {
+    const pointer = (pointerId: number, pointerType = 'touch', button = 0) =>
+      ({
+        pointerId,
+        pointerType,
+        button,
+        target: null,
+        preventDefault: () => undefined,
+      }) as unknown as PointerEvent;
+    const held = () => [...component.highlightedKeyIds].sort((a, b) => a - b);
+
+    // keys: 0 = C4, 4 = E4, 7 = G4
+    it('plays a chord with several fingers, and releases them one by one', () => {
+      component.onPointerDown(pointer(1), 0);
+      component.onPointerDown(pointer(2), 4);
+      component.onPointerDown(pointer(3), 7);
+      expect(held()).toEqual([0, 4, 7]);
+      component.onPointerUp(pointer(2));
+      expect(held()).toEqual([0, 7]);
+      component.onPointerUp(pointer(1));
+      component.onPointerUp(pointer(3));
+      expect(held()).toEqual([]);
+    });
+
+    it('plays the keys a finger slides onto (glissando)', () => {
+      component.onPointerDown(pointer(1), 0);
+      component.onPointerLeave(pointer(1), 0);
+      component.onPointerEnter(pointer(1), 2);
+      expect(held()).toEqual([2]);
+      component.onPointerLeave(pointer(1), 2);
+      component.onPointerEnter(pointer(1), 4);
+      expect(held()).toEqual([4]);
+      component.onPointerUp(pointer(1)); // lifted, even off the keyboard
+      expect(held()).toEqual([]);
+    });
+
+    it('ignores a mouse moving over the keys without a button pressed', () => {
+      component.onPointerEnter(pointer(1, 'mouse'), 0);
+      expect(held()).toEqual([]);
+    });
+
+    it('ignores the right mouse button', () => {
+      component.onPointerDown(pointer(1, 'mouse', 2), 0);
+      expect(held()).toEqual([]);
+    });
+
+    it('keeps a key held by two fingers until both are lifted', () => {
+      component.onPointerDown(pointer(1), 0);
+      component.onPointerDown(pointer(2), 0);
+      component.onPointerUp(pointer(1));
+      expect(held()).toEqual([0]);
+      component.onPointerUp(pointer(2));
+      expect(held()).toEqual([]);
+    });
+  });
+
   it('stops the notes when the keyboard is destroyed', async () => {
     component.keyPress(0);
     await audio.finishLoading('C4');

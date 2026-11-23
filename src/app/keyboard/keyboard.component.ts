@@ -1,4 +1,14 @@
-import { Component, Input, OnInit, OnChanges, OnDestroy, SimpleChanges, HostListener, inject } from '@angular/core';
+import {
+  Component,
+  HostBinding,
+  HostListener,
+  Input,
+  OnChanges,
+  OnDestroy,
+  OnInit,
+  SimpleChanges,
+  inject,
+} from '@angular/core';
 import { IPianoKey } from './ipiano-key';
 import { CommonModule } from '@angular/common';
 import { combineLatest, Subscription } from 'rxjs';
@@ -10,6 +20,10 @@ const BASE_NOTES = ['C', 'Cs', 'D', 'Ds', 'E', 'F', 'Fs', 'G', 'Gs', 'A', 'As', 
 const WHITE_IN_OCTAVE = [0, 2, 4, 5, 7, 9, 11];
 const HAS_BLACK_LEFT = new Set([2, 4, 7, 9, 11]);
 const START_OCTAVE: Record<number, number> = { 1: 4, 2: 3, 3: 3, 4: 2 };
+/** Narrowest white key still easy to play with a finger. */
+const MIN_WHITE_KEY_PX = 26;
+/** Room around the keyboard: page margins and the keyboard's frame. */
+const PAGE_MARGIN_PX = 60;
 
 @Component({
   selector: 'app-keyboard',
@@ -46,6 +60,13 @@ export class KeyboardComponent implements OnInit, OnChanges, OnDestroy {
    */
   private readonly presses = new Map<number, number>();
   private lastPress = 0;
+  /** Octaves that fit in the width given to the keyboard. */
+  private fittingOctaves = 4;
+  private builtOctaves = 0;
+  /** Pointers down (finger on the screen, mouse button pressed). */
+  private readonly activePointers = new Set<number>();
+  /** Key held by each pointer down. */
+  private readonly pointerKeys = new Map<number, number>();
 
   // AZERTY mapping — indices are relative to the keyboard's first note
   private readonly azertyMap: Record<string, number> = {
@@ -60,13 +81,21 @@ export class KeyboardComponent implements OnInit, OnChanges, OnDestroy {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['size'] && !changes['size'].isFirstChange()) {
-      this.buildKeys();
-      this.updateScaleHighlight(this.lastPitchClasses, this.lastRoot);
+      this.rebuildIfNeeded();
     }
+  }
+
+  /**
+   * Octaves displayed: the size chosen in the settings, fewer when the
+   * screen is too narrow for the keys to stay playable with a finger.
+   */
+  get octaves(): 1 | 2 | 3 | 4 {
+    return Math.min(this.size, this.fittingOctaves) as 1 | 2 | 3 | 4;
   }
 
   ngOnInit(): void {
     this.buildKeys();
+    this.onWindowResize();
     this.scaleSub = combineLatest([
       this.scaleService.activePitchClasses$,
       this.scaleService.root$,
@@ -83,10 +112,39 @@ export class KeyboardComponent implements OnInit, OnChanges, OnDestroy {
     this.scaleSub?.unsubscribe();
   }
 
+  /** Number of white keys, read by the styles to size the keyboard. */
+  @HostBinding('style.--white-keys')
+  get whiteKeyCount(): number {
+    return this.pianoKeys.length;
+  }
+
+  /**
+   * The pages center their content: the keyboard takes its width from the
+   * window (see the styles), and so does the number of octaves that fit.
+   */
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    const width = window.innerWidth - PAGE_MARGIN_PX;
+    // 7 white keys per octave, plus the last C
+    const fitting = Math.floor((width / MIN_WHITE_KEY_PX - 1) / 7);
+    this.fittingOctaves = Math.max(1, Math.min(4, fitting));
+    this.rebuildIfNeeded();
+  }
+
+  /** Rebuild the keys when the number of octaves displayed changes. */
+  private rebuildIfNeeded(): void {
+    if (this.octaves !== this.builtOctaves) {
+      this.buildKeys();
+      this.updateScaleHighlight(this.lastPitchClasses, this.lastRoot);
+    }
+  }
+
   private stopAll(): void {
     this.playing.forEach(note => note.stop());
     this.playing.clear();
     this.presses.clear();
+    this.pointerKeys.clear();
+    this.activePointers.clear();
   }
 
   private buildKeys(): void {
@@ -94,7 +152,8 @@ export class KeyboardComponent implements OnInit, OnChanges, OnDestroy {
     this.highlightedKeyIds.clear();
     this.noteState.reset();
 
-    const octaves = this.size;
+    const octaves = this.octaves;
+    this.builtOctaves = octaves;
     const startOct = START_OCTAVE[octaves];
 
     // Build fullNotes
@@ -156,6 +215,68 @@ export class KeyboardComponent implements OnInit, OnChanges, OnDestroy {
     const idx = this.keyboardMap[key];
     if (idx !== undefined && idx < this.fullNotes.length) {
       this.stopNoteByIndex(idx);
+    }
+  }
+
+  // ----- pointers: mouse, fingers (several at once for chords) and pen -----
+
+  onPointerDown(event: PointerEvent, keyId: number): void {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    event.preventDefault(); // no text selection, no emulated mouse events
+    // a touch is captured by the key it starts on: release it, so that
+    // sliding the finger onto the next keys plays them (glissando)
+    const target = event.target as Element | null;
+    if (target?.hasPointerCapture?.(event.pointerId)) {
+      target.releasePointerCapture(event.pointerId);
+    }
+    this.activePointers.add(event.pointerId);
+    this.holdKey(event.pointerId, keyId);
+  }
+
+  /** A held pointer (finger down, mouse button down) slides onto a key. */
+  onPointerEnter(event: PointerEvent, keyId: number): void {
+    if (this.activePointers.has(event.pointerId)) {
+      this.holdKey(event.pointerId, keyId);
+    }
+  }
+
+  /** It slides off the key: the pointer stays held for the next key. */
+  onPointerLeave(event: PointerEvent, keyId: number): void {
+    if (this.pointerKeys.get(event.pointerId) === keyId) {
+      this.pointerKeys.delete(event.pointerId);
+      this.releaseIfFree(keyId);
+    }
+  }
+
+  /** Listened on the whole page: the finger may be lifted off the keyboard. */
+  @HostListener('document:pointerup', ['$event'])
+  @HostListener('document:pointercancel', ['$event'])
+  onPointerUp(event: PointerEvent): void {
+    this.activePointers.delete(event.pointerId);
+    const keyId = this.pointerKeys.get(event.pointerId);
+    this.pointerKeys.delete(event.pointerId);
+    if (keyId !== undefined) {
+      this.releaseIfFree(keyId);
+    }
+  }
+
+  private holdKey(pointerId: number, keyId: number): void {
+    const previous = this.pointerKeys.get(pointerId);
+    if (previous === keyId) return;
+    const alreadyHeld = [...this.pointerKeys.values()].includes(keyId);
+    this.pointerKeys.set(pointerId, keyId);
+    if (previous !== undefined) {
+      this.releaseIfFree(previous);
+    }
+    if (!alreadyHeld) {
+      this.keyPress(keyId); // another finger on the same key: no restart
+    }
+  }
+
+  /** Release a key, unless another pointer still holds it. */
+  private releaseIfFree(keyId: number): void {
+    if (![...this.pointerKeys.values()].includes(keyId)) {
+      this.keyRelease(keyId);
     }
   }
 
