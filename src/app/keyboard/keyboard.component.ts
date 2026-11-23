@@ -8,6 +8,7 @@ import {
   OnInit,
   SimpleChanges,
   inject,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { IPianoKey } from './ipiano-key';
 
@@ -29,6 +30,7 @@ const PAGE_MARGIN_PX = 60;
     selector: 'app-keyboard',
     templateUrl: './keyboard.component.html',
     styleUrls: ['./keyboard.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: []
 })
 export class KeyboardComponent implements OnInit, OnChanges, OnDestroy {

@@ -1,4 +1,4 @@
-import { Component, HostListener, inject } from '@angular/core';
+import { Component, HostListener, inject, ChangeDetectionStrategy } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { SettingsService, NotationSystem, Language, KeyboardSize } from '../settings.service';
 import { TranslatePipe } from '../translate.pipe';
@@ -7,6 +7,7 @@ import { TranslatePipe } from '../translate.pipe';
     selector: 'app-parameters',
     imports: [AsyncPipe, TranslatePipe],
     templateUrl: './parameters.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./parameters.component.scss']
 })
 export class ParametersComponent {

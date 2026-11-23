@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { KeyboardComponent } from '../keyboard/keyboard.component';
 import { NoteStateService } from '../note-state.service';
@@ -8,6 +8,7 @@ import { SettingsService } from '../settings.service';
     selector: 'app-learn',
     imports: [KeyboardComponent, AsyncPipe],
     templateUrl: './learn.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./learn.component.scss']
 })
 export class LearnComponent {

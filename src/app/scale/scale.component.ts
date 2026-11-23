@@ -1,4 +1,4 @@
-import { Component, HostListener, inject } from '@angular/core';
+import { Component, HostListener, inject, ChangeDetectionStrategy } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { combineLatest, map } from 'rxjs';
 import { ScaleService, ScaleType } from './scale.service';
@@ -11,6 +11,7 @@ import { noteName, rootSpelling, spellScale } from '../music/music-theory';
     selector: 'app-scale',
     imports: [AsyncPipe, TranslatePipe, KeyboardComponent],
     templateUrl: './scale.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./scale.component.scss']
 })
 export class ScaleComponent {
