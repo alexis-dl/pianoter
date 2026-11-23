@@ -1,109 +1,53 @@
-# Pianoter Frontend - AI Agent Guidelines
+# Pianoter - AI Agent Guidelines
 
 ## Project Overview
 
-Pianoter is an Angular 18 piano application featuring a visual keyboard component and a piano note player. The application uses standalone components, strict TypeScript configuration, and Web Audio API for sound playback.
+Pianoter is an Angular 22 virtual piano: a keyboard with sampled piano
+sounds, a Learn page naming the notes / intervals / chords played, a Scale
+page, and settings. See README.md for the features and the code map.
 
 ## Code Style
 
-### Angular & TypeScript
-
-- **Framework**: Angular 18 with standalone components (no NgModules)
-- **TypeScript**: ES2022 target, strict mode enabled (`noImplicitAny`, `noImplicitReturns`, `strictTemplateTypes`)
-- **Naming**: Component files follow pattern `name.component.ts` with corresponding `.html` and `.scss` files
-- **Imports**: Use relative imports for local files, barrel exports with `index.ts` when organizing modules
-
-### SCSS Styling
-
-- Style files use SCSS format (`.scss`)
-- Keep component styles in `component-name.component.scss` colocated with the component
-- Define colors and shared styles as SCSS variables
-
-### Enums & Constants
-
-- Musical notes defined as enums in [src/app/piano/note.enum..ts](src/app/piano/note.enum..ts)
-- Use `PIANO_12_NOTES` constant for chromatic scale references
+- **Angular 22**, standalone components (no NgModules, no `standalone: true`:
+  it is the default), `ChangeDetectionStrategy.Eager`, built-in control flow
+  (`@if`, `@for`), `inject()` for dependencies.
+- **TypeScript** strict mode. Comments and identifiers in English.
+- **SCSS**, one file per component. Budget: 4 kB warning per component style.
+- State lives in services exposing `BehaviorSubject` values as observables.
 
 ## Architecture
 
-### Component Structure
-
-```
-src/app/
-├── keyboard/        # Keyboard/UI component with built-in sound playback
-│   ├── keyboard.component.ts
-│   ├── keyboard.component.html
-│   ├── keyboard.component.scss
-│   ├── ipiano-key.ts    # Interface for piano keys
-│   └── note.enum..ts    # Note definitions
-└── app.component.ts # Root component
-```
-
-### Sound Emission
-
-**Sound is emitted in [src/app/keyboard/keyboard.component.ts](src/app/keyboard/keyboard.component.ts) via the `playNote()` method:**
-
-- Creates HTML Audio element: `new Audio('assets/sounds/piano-sounds/' + note + '.mp3')`
-- Calls `audio.play()` to emit sound
-- Sound files stored in `assets/sounds/piano-sounds/` directory with 49 files named from `C2.mp3` through `C6.mp3`
-
-### Component Communication
-
-- `KeyboardComponent` is self-contained and handles both keyboard UI and note playback
-- Root `AppComponent` simply composes the keyboard component
+- `keyboard/keyboard.component.ts`: builds the keys for the octaves shown
+  (`size` input, capped by the window width), handles pointer events
+  (mouse, several fingers, glissando) and the AZERTY keys, highlights scales.
+  It does not play sound itself.
+- `audio/piano-audio.service.ts`: the only `AudioContext` of the app and the
+  cache of samples (`assets/sounds/piano-sounds/<note>.mp3`, e.g. `C4`,
+  `Fs3`). Never create another `AudioContext`.
+- `music/music-theory.ts`: pure functions for scales, intervals, chords and
+  note spelling (letters + accidentals, ♯/♭). Put music logic here, with
+  tests, rather than in components.
+- `note-state.service.ts`: notes held and their name (Learn page).
+- `settings.service.ts` / `scale/scale.service.ts`: settings and the chosen
+  scale. Read stored values through `storage.ts` (it never throws) and
+  check them against the allowed values.
+- `translation.service.ts` + `i18n/fr.json`, `i18n/en.json`: texts built into
+  the app. Both files must have the same keys (checked by a test). Interval
+  and chord names are in `music-theory.ts`, by language.
 
 ## Build and Test
 
-### Development
-
 ```bash
-npm start          # Start dev server at http://localhost:4200/
-npm run build      # Build for production
-npm run watch      # Build in watch mode
-npm test           # Run unit tests via Karma
+npm start          # dev server on http://localhost:4200/
+npm run build      # production build
+npm run test:ci    # all unit tests once, headless Chrome (Karma + Jasmine)
 ```
 
-### Testing Framework
+Add or update tests (`*.spec.ts`, next to the code) with every change; the
+tests run in CI on every push.
 
-- **Unit Tests**: Karma + Jasmine
-- **Test Files**: Located alongside components with `.spec.ts` suffix
-- **Configuration**: See `karma.conf.js` for test runner configuration
+## Deployment
 
-## Project Conventions
-
-### Component Patterns
-
-1. All components are **standalone** - import only needed dependencies via `imports: [...]`
-2. Use `templateUrl` and `styleUrls` (or `styleUrl`) for external templates and styles
-3. Implement `OnInit` lifecycle hook when needed for initialization logic
-
-### Type Safety
-
-- Use strict TypeScript with proper type annotations
-- Interfaces for structural contracts (e.g., `IPianoKey` extends `{ whiteKeyId: number }`)
-- Enums for fixed sets of values (see `Note` enum)
-
-### Audio Handling
-
-- Web Audio API used directly via browser's `Audio` constructor
-- No external audio library dependencies
-- File paths relative to `assets/` directory in public folder structure
-
-## Integration Points
-
-### External Assets
-
-- Sound files: `src/assets/sounds/` - WAV format audio files
-- Build process handles asset copying to `dist/` during build
-
-### Browser APIs Used
-
-- **Web Audio API**: `new Audio()` for sound playback
-- **DOM APIs**: Standard Angular template bindings
-
-## Key Files Reference
-
-- **Root Config**: [src/app/app.config.ts](src/app/app.config.ts)
-- **Routes**: [src/app/app.routes.ts](src/app/app.routes.ts)
-- **Entry Point**: [src/main.ts](src/main.ts)
-- **Global Styles**: [src/styles.scss](src/styles.scss)
+Submodule of the portfolio site (GitHub Pages, base href `/pianoter/`).
+Asset URLs must stay relative (`assets/...`) so that they work under that
+base href.

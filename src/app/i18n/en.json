@@ -3,7 +3,6 @@
   "nav.piano": "Piano",
   "nav.learn": "Learn",
   "nav.scale": "Scale",
-  "nav.scores": "Sheet Music",
   "nav.settings": "Settings",
   "settings.title": "Settings",
   "settings.notation.title": "Note notation system",
@@ -25,6 +24,5 @@
   "scale.type.label": "Type",
   "scale.type.major": "Major",
   "scale.type.minor": "Minor",
-  "scale.type.harmonicMinor": "Harmonic minor",
   "scale.type.harmonic-minor": "Harmonic minor"
 }

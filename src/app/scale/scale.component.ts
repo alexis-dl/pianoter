@@ -50,9 +50,9 @@ export class ScaleComponent {
   protected noteIndices = Array.from({ length: 12 }, (_, i) => i);
 
   protected readonly scaleTypes: { value: ScaleType; labelKey: string }[] = [
-    { value: 'major',          labelKey: 'scale.type.major' },
-    { value: 'minor',          labelKey: 'scale.type.minor' },
-    { value: 'harmonic-minor', labelKey: 'scale.type.harmonicMinor' },
+    { value: 'major', labelKey: 'scale.type.major' },
+    { value: 'minor', labelKey: 'scale.type.minor' },
+    { value: 'harmonic-minor', labelKey: 'scale.type.harmonic-minor' },
   ];
 
   protected rootOpen = false;

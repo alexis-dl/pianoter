@@ -1,27 +1,57 @@
-# PianoterFront
+# Pianoter
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.1.0.
+A virtual piano in the browser, to play and to learn: it names the notes,
+intervals and chords you play, and shows the scales on the keyboard.
 
-## Development server
+Live: https://alexis-dl.github.io/pianoter/
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+## Features
 
-## Code scaffolding
+- **Piano**: 1 to 4 octaves of sampled piano (A0–C8 samples, loaded on first
+  use). Play with the mouse, the fingers (several at once for chords, slide
+  for a glissando) or the computer keyboard (AZERTY layout).
+- **Learn**: names what you play — a note, an interval (from the lowest
+  note), or a chord in any inversion (major, minor, diminished, augmented,
+  7, maj7, m7).
+- **Scale**: major, natural minor and harmonic minor scales on any root,
+  highlighted on the keyboard and spelled as on a score (F major has B♭,
+  G♯ harmonic minor has F♯♯).
+- **Settings**: note names (Do Ré Mi or C D E), language (French or
+  English), keyboard size. Saved in the browser.
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+On a phone, the keyboard stays on one row and shows fewer octaves when the
+screen is too narrow.
 
-## Build
+## Development
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+Angular 22, standalone components, no UI library. Node 22.22+ or 24.
 
-## Running unit tests
+```bash
+npm install
+npm start          # dev server on http://localhost:4200/
+npm run build      # production build in dist/pianoter/browser
+npm test           # unit tests (Karma + Jasmine), watch mode
+npm run test:ci    # unit tests once, in headless Chrome (as in CI)
+```
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+The tests run on every push and pull request (`.github/workflows/test.yml`).
 
-## Running end-to-end tests
+## Code map
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+| Path | Role |
+|---|---|
+| `src/app/keyboard/` | The keyboard: keys, pointer and AZERTY input, octaves that fit the screen |
+| `src/app/audio/piano-audio.service.ts` | One `AudioContext` and one cache of samples for the whole app |
+| `src/app/music/music-theory.ts` | Scales, intervals, chords and note spelling (pure functions) |
+| `src/app/note-state.service.ts` | Notes held, and what they make (Learn page) |
+| `src/app/scale/` | Scale page and the chosen scale |
+| `src/app/settings.service.ts` | Settings, checked when read back from storage |
+| `src/app/translation.service.ts`, `src/app/i18n/` | Texts in French and English, built into the app |
+| `src/assets/sounds/piano-sounds/` | Piano samples, one MP3 per note (`C4.mp3`, `Fs3.mp3`...) |
 
-## Further help
+## Deployment
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Pianoter is a submodule of the portfolio site, which builds it with
+`--base-href /pianoter/` and publishes it on GitHub Pages. A push to
+`master` notifies the portfolio (`.github/workflows/notify-portfolio.yml`),
+which redeploys the site.

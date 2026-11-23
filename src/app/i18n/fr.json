@@ -3,7 +3,6 @@
   "nav.piano": "Piano",
   "nav.learn": "Apprendre",
   "nav.scale": "Gamme",
-  "nav.scores": "Partitions",
   "nav.settings": "Paramètres",
   "settings.title": "Paramètres",
   "settings.notation.title": "Système de notation des notes",
@@ -25,6 +24,5 @@
   "scale.type.label": "Type",
   "scale.type.major": "Majeur",
   "scale.type.minor": "Mineur",
-  "scale.type.harmonicMinor": "Mineur harmonique",
   "scale.type.harmonic-minor": "Mineur harmonique"
 }
