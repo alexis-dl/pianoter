@@ -1,44 +1,24 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, merge } from 'rxjs';
+import {
+  commonNoteName,
+  findChord,
+  intervalName,
+  noteName,
+  singleNoteName,
+  spellChord,
+  spellInterval,
+} from './music/music-theory';
 import { SettingsService } from './settings.service';
 
-const NOTES_LATIN = ['Do', 'Do#', 'Ré', 'Ré#', 'Mi', 'Fa', 'Fa#', 'Sol', 'Sol#', 'La', 'La#', 'Si'];
-const NOTES_ANGLO = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-
-const CHORDS_LATIN: { intervals: number[]; suffix: string }[] = [
-  { intervals: [0, 4, 7, 11], suffix: 'maj.7' },
-  { intervals: [0, 3, 7, 10], suffix: 'm7' },
-  { intervals: [0, 4, 7, 10], suffix: '7' },
-  { intervals: [0, 4, 7],     suffix: 'majeur' },
-  { intervals: [0, 3, 7],     suffix: 'mineur' },
-  { intervals: [0, 3, 6],     suffix: 'dim.' },
-  { intervals: [0, 4, 8],     suffix: 'aug.' },
-];
-
-const CHORDS_ANGLO: { intervals: number[]; suffix: string }[] = [
-  { intervals: [0, 4, 7, 11], suffix: 'maj7' },
-  { intervals: [0, 3, 7, 10], suffix: 'm7' },
-  { intervals: [0, 4, 7, 10], suffix: '7' },
-  { intervals: [0, 4, 7],     suffix: 'maj' },
-  { intervals: [0, 3, 7],     suffix: 'min' },
-  { intervals: [0, 3, 6],     suffix: 'dim' },
-  { intervals: [0, 4, 8],     suffix: 'aug' },
-];
-
-const INTERVALS: Record<number, string> = {
-  1: 'Seconde mineure', 2: 'Seconde majeure',
-  3: 'Tierce mineure',  4: 'Tierce majeure',
-  5: 'Quarte',          6: 'Triton',
-  7: 'Quinte',          8: 'Sixte mineure',
-  9: 'Sixte majeure',   10: 'Septième min.',
-  11: 'Septième maj.',
-};
-
 export interface NoteDisplay {
+  /** Names of the notes played, spelled for what they make together. */
   noteNames: string[];
+  /** The note, the interval or the chord they make. */
   label: string;
 }
 
+/** Notes held on the keyboard, and what they make (Learn page). */
 @Injectable({ providedIn: 'root' })
 export class NoteStateService {
   private activeIndices = new Set<number>();
@@ -46,7 +26,10 @@ export class NoteStateService {
   readonly display$ = this._display$.asObservable();
 
   constructor(private settings: SettingsService) {
-    this.settings.notation$.subscribe(() => this.emit());
+    // note names follow the notation, interval and chord names the language
+    merge(this.settings.notation$, this.settings.language$).subscribe(() =>
+      this.emit()
+    );
   }
 
   press(noteIndex: number): void {
@@ -65,44 +48,36 @@ export class NoteStateService {
   }
 
   private emit(): void {
-    const notes = this.settings.notation === 'anglo' ? NOTES_ANGLO : NOTES_LATIN;
-    const chords = this.settings.notation === 'anglo' ? CHORDS_ANGLO : CHORDS_LATIN;
+    const notation = this.settings.notation;
+    const language = this.settings.language;
+    const name = (spelling: Parameters<typeof noteName>[0]) =>
+      noteName(spelling, notation);
 
     // from the lowest note up, whatever the order the keys were pressed in
     const sorted = [...this.activeIndices].sort((a, b) => a - b);
     const pitchClasses = [...new Set(sorted.map(i => i % 12))];
-    const noteNames = pitchClasses.map(p => notes[p]);
 
+    let noteNames: string[] = [];
     let label = '';
     if (pitchClasses.length === 1) {
-      label = notes[pitchClasses[0]];
+      label = singleNoteName(pitchClasses[0], notation);
+      noteNames = [label];
     } else if (pitchClasses.length === 2) {
       // pitchClasses[0] is the lowest note: the interval goes up from it
-      const diff = (pitchClasses[1] - pitchClasses[0] + 12) % 12;
-      label = INTERVALS[diff] ?? noteNames.join(' + ');
+      const [lower, upper] = pitchClasses;
+      noteNames = spellInterval(lower, upper).map(name);
+      label = intervalName(upper - lower, language);
     } else if (pitchClasses.length >= 3) {
-      label = this.detectChord(pitchClasses, notes, chords) ?? noteNames.join(' + ');
+      const chord = findChord(pitchClasses);
+      if (chord) {
+        noteNames = spellChord(chord).map(name);
+        label = `${noteNames[0]} ${chord.quality.name[language]}`;
+      } else {
+        noteNames = pitchClasses.map(pitch => commonNoteName(pitch, notation));
+        label = noteNames.join(' + ');
+      }
     }
 
     this._display$.next({ noteNames, label });
-  }
-
-  private detectChord(
-    pitchClasses: number[],
-    notes: string[],
-    chords: { intervals: number[]; suffix: string }[]
-  ): string | null {
-    for (const root of pitchClasses) {
-      const intervals = pitchClasses
-        .map(p => (p - root + 12) % 12)
-        .sort((a, b) => a - b);
-      for (const chord of chords) {
-        if (chord.intervals.length === intervals.length &&
-            chord.intervals.every((v, i) => v === intervals[i])) {
-          return `${notes[root]} ${chord.suffix}`;
-        }
-      }
-    }
-    return null;
   }
 }

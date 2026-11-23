@@ -39,7 +39,7 @@
                 [class.active]="(root$ | async) === i"
                 (click)="setRoot(i)"
               >
-                {{ noteName(i, (notation$ | async)!) }}
+                {{ (rootNames$ | async)?.[i] }}
               </li>
             }
           </ul>
@@ -81,6 +81,17 @@
       </div>
     </div>
   </div>
+
+  <!-- the notes of the scale, spelled as on a score -->
+  @if (scaleNotes$ | async; as notes) {
+    @if (notes.length) {
+      <ol class="scale-notes">
+        @for (note of notes; track $index) {
+          <li [class.root]="$first">{{ note }}</li>
+        }
+      </ol>
+    }
+  }
 
   <app-keyboard [highlightScale]="true" [size]="3"></app-keyboard>
 </div>

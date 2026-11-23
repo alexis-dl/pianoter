@@ -5,9 +5,7 @@ import { ScaleService, ScaleType } from './scale.service';
 import { SettingsService } from '../settings.service';
 import { TranslatePipe } from '../translate.pipe';
 import { KeyboardComponent } from '../keyboard/keyboard.component';
-
-const NOTES_LATIN = ['Do', 'Do#', 'Ré', 'Ré#', 'Mi', 'Fa', 'Fa#', 'Sol', 'Sol#', 'La', 'La#', 'Si'];
-const NOTES_ANGLO = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+import { noteName, rootSpelling, spellScale } from '../music/music-theory';
 
 @Component({
   selector: 'app-scale',
@@ -23,11 +21,30 @@ export class ScaleComponent {
   protected root$ = this.scaleService.root$;
   protected type$ = this.scaleService.type$;
 
-  protected rootLabel$ = combineLatest([this.scaleService.root$, this.settings.notation$]).pipe(
-    map(([root, notation]) => {
-      if (root === null) return null;
-      return (notation === 'anglo' ? NOTES_ANGLO : NOTES_LATIN)[root];
-    })
+  /** Names of the 12 possible roots, as usually written for this type. */
+  protected rootNames$ = combineLatest([this.type$, this.settings.notation$]).pipe(
+    map(([type, notation]) =>
+      Array.from({ length: 12 }, (_, root) =>
+        noteName(rootSpelling(root, type !== 'major'), notation)
+      )
+    )
+  );
+
+  protected rootLabel$ = combineLatest([this.root$, this.rootNames$]).pipe(
+    map(([root, names]) => (root === null ? null : names[root]))
+  );
+
+  /** The notes of the scale, one per letter (F major: ... B♭ ...). */
+  protected scaleNotes$ = combineLatest([
+    this.root$,
+    this.type$,
+    this.settings.notation$,
+  ]).pipe(
+    map(([root, type, notation]) =>
+      root === null
+        ? []
+        : spellScale(root, type).map(spelling => noteName(spelling, notation))
+    )
   );
 
   protected noteIndices = Array.from({ length: 12 }, (_, i) => i);
@@ -40,12 +57,6 @@ export class ScaleComponent {
 
   protected rootOpen = false;
   protected typeOpen = false;
-
-  notation$ = this.settings.notation$;
-
-  noteName(index: number, notation: string): string {
-    return (notation === 'anglo' ? NOTES_ANGLO : NOTES_LATIN)[index];
-  }
 
   setRoot(root: number | null): void {
     this.scaleService.setRoot(root);

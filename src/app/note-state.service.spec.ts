@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { NoteDisplay, NoteStateService } from './note-state.service';
+import { SettingsService } from './settings.service';
 
 // note indices are relative to the first key, a C
 const C = 0;
@@ -19,7 +20,10 @@ describe('NoteStateService', () => {
     service.display$.subscribe(value => (display = value));
   });
 
-  afterEach(() => localStorage.removeItem('notationSystem'));
+  afterEach(() => {
+    localStorage.removeItem('notationSystem');
+    localStorage.removeItem('language');
+  });
 
   const play = (...notes: number[]) => {
     service.reset();
@@ -60,18 +64,31 @@ describe('NoteStateService', () => {
     expect(play(2, 5, 9, 12).label).toBe('Ré m7'); // D F A C
   });
 
+  it('spells the notes for what they make: E♭ in a C minor chord', () => {
+    expect(play(C, 3).noteNames).toEqual(['Do', 'Mi♭']);
+    expect(play(C, 3, G).noteNames).toEqual(['Do', 'Mi♭', 'Sol']);
+    expect(play(1).label).toBe('Do♯ / Ré♭'); // a black key alone
+  });
+
+  it('follows a change of language while notes are held', () => {
+    play(C, E);
+    TestBed.inject(SettingsService).setLanguage('en');
+    expect(display.label).toBe('Major third');
+  });
+
   it('names the tritone, and lists notes that make no known chord', () => {
     expect(play(C, 6).label).toBe('Triton');
-    expect(play(C, 1, 2).label).toBe('Do + Do# + Ré');
+    expect(play(C, 1, 2).label).toBe('Do + Do♯ + Ré');
   });
 
   it('switches to C D E names with the English notation', () => {
     localStorage.setItem('notationSystem', 'anglo');
+    localStorage.setItem('language', 'en');
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({});
     service = TestBed.inject(NoteStateService);
     service.display$.subscribe(value => (display = value));
-    expect(play(9, 12, 16).label).toBe('A min');
+    expect(play(9, 12, 16).label).toBe('A minor');
     expect(play(G, 11, 14, 17).noteNames).toEqual(['G', 'B', 'D', 'F']);
   });
 });

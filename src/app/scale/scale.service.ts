@@ -1,14 +1,9 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, combineLatest } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { SCALE_INTERVALS, ScaleType } from '../music/music-theory';
 
-export type ScaleType = 'major' | 'minor' | 'harmonic-minor';
-
-const SCALE_INTERVALS: Record<ScaleType, number[]> = {
-  'major':          [0, 2, 4, 5, 7, 9, 11],
-  'minor':          [0, 2, 3, 5, 7, 8, 10],
-  'harmonic-minor': [0, 2, 3, 5, 7, 8, 11],
-};
+export type { ScaleType };
 
 /** Stored root: a pitch class from 0 (C) to 11 (B), else none. */
 function storedRoot(): number | null {
