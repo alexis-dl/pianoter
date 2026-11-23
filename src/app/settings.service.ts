@@ -5,17 +5,36 @@ export type NotationSystem = 'latin' | 'anglo';
 export type Language = 'fr' | 'en';
 export type KeyboardSize = 1 | 2 | 3 | 4;
 
+const NOTATIONS: NotationSystem[] = ['latin', 'anglo'];
+const LANGUAGES: Language[] = ['fr', 'en'];
+const KEYBOARD_SIZES: KeyboardSize[] = [1, 2, 3, 4];
+
+/**
+ * A stored setting, if it is one of the known values: an old or damaged
+ * value (keyboard size 7...) would break the app.
+ */
+function stored<T>(key: string, allowed: readonly T[], fallback: T): T {
+  const raw = localStorage.getItem(key);
+  const value = allowed.find(option => String(option) === raw);
+  return value ?? fallback;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SettingsService {
   private readonly _notation$ = new BehaviorSubject<NotationSystem>(
-    (localStorage.getItem('notationSystem') as NotationSystem) ?? 'latin'
+    stored('notationSystem', NOTATIONS, 'latin')
   );
   readonly notation$ = this._notation$.asObservable();
 
   private readonly _language$ = new BehaviorSubject<Language>(
-    (localStorage.getItem('language') as Language) ?? 'fr'
+    stored('language', LANGUAGES, 'fr')
   );
   readonly language$ = this._language$.asObservable();
+
+  private readonly _keyboardSize$ = new BehaviorSubject<KeyboardSize>(
+    stored('keyboardSize', KEYBOARD_SIZES, 3)
+  );
+  readonly keyboardSize$ = this._keyboardSize$.asObservable();
 
   get notation(): NotationSystem {
     return this._notation$.value;
@@ -25,17 +44,14 @@ export class SettingsService {
     return this._language$.value;
   }
 
+  get keyboardSize(): KeyboardSize {
+    return this._keyboardSize$.value;
+  }
+
   setNotation(system: NotationSystem): void {
     localStorage.setItem('notationSystem', system);
     this._notation$.next(system);
   }
-
-  private readonly _keyboardSize$ = new BehaviorSubject<KeyboardSize>(
-    (Number(localStorage.getItem('keyboardSize')) as KeyboardSize) || 3
-  );
-  readonly keyboardSize$ = this._keyboardSize$.asObservable();
-
-  get keyboardSize(): KeyboardSize { return this._keyboardSize$.value; }
 
   setLanguage(lang: Language): void {
     localStorage.setItem('language', lang);

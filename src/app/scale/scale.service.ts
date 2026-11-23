@@ -10,14 +10,23 @@ const SCALE_INTERVALS: Record<ScaleType, number[]> = {
   'harmonic-minor': [0, 2, 3, 5, 7, 8, 11],
 };
 
+/** Stored root: a pitch class from 0 (C) to 11 (B), else none. */
+function storedRoot(): number | null {
+  const raw = localStorage.getItem('scaleRoot');
+  const root = raw === null ? NaN : Number(raw);
+  return Number.isInteger(root) && root >= 0 && root < 12 ? root : null;
+}
+
+/** Stored type, if known: an unknown one would break the scale's notes. */
+function storedType(): ScaleType {
+  const raw = localStorage.getItem('scaleType');
+  return raw !== null && raw in SCALE_INTERVALS ? (raw as ScaleType) : 'major';
+}
+
 @Injectable({ providedIn: 'root' })
 export class ScaleService {
-  private readonly _root$ = new BehaviorSubject<number | null>(
-    localStorage.getItem('scaleRoot') !== null ? Number(localStorage.getItem('scaleRoot')) : null
-  );
-  private readonly _type$ = new BehaviorSubject<ScaleType>(
-    (localStorage.getItem('scaleType') as ScaleType) ?? 'major'
-  );
+  private readonly _root$ = new BehaviorSubject<number | null>(storedRoot());
+  private readonly _type$ = new BehaviorSubject<ScaleType>(storedType());
 
   readonly root$ = this._root$.asObservable();
   readonly type$ = this._type$.asObservable();
